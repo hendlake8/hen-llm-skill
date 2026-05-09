@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors / IDE
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Backups
+*.bak
+
+# hs runtime state (per-user, per-project — never share)
+.hs/
+
+# Claude Code project local settings (allowlist, personal)
+.claude/
+
+# Serena project state
+.serena/
+
+# Tmp / logs
+*.tmp
+*.log

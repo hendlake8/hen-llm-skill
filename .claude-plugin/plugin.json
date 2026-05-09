@@ -1,0 +1,9 @@
+{
+  "name": "hs",
+  "description": "hendlake's personal Claude Code skills — game development and general programming workflows. SuperClaude alternative aligned with the user's global rules and conventions.",
+  "version": "0.1.0",
+  "author": {
+    "name": "hendlake",
+    "email": "hendlake888@gmail.com"
+  }
+}
