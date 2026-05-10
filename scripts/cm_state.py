@@ -1236,6 +1236,36 @@ def build_report_markdown(scope: dict, topics: list, users: list,
     return "\n".join(lines)
 
 
+def _maybe_register_obsidian_junction(project_root: Path, subfolder: str,
+                                      name_suffix: str) -> None:
+    """OBSIDIAN_VAULT 환경변수 + Windows + register_vault.ps1 모두 갖춰지면 junction 등록 시도.
+
+    부가 기능. 실패는 silent — stats 본 동작에 영향 없음.
+    """
+    if os.environ.get("OBSIDIAN_VAULT") is None:
+        return
+    if sys.platform != "win32":
+        return
+    register_script = Path.home() / ".claude" / "register_vault.ps1"
+    if not register_script.exists():
+        return
+    try:
+        subprocess.run(
+            [
+                "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+                "-File", str(register_script),
+                "-ProjectRoot", str(project_root),
+                "-Subfolder", subfolder,
+                "-NameSuffix", name_suffix,
+            ],
+            check=False,
+            capture_output=True,
+            timeout=15,
+        )
+    except (subprocess.SubprocessError, OSError, FileNotFoundError):
+        pass
+
+
 def cmd_stats(args):
     """stats 서브커맨드 진입점."""
     project_root = Path.cwd()
@@ -1305,8 +1335,8 @@ def cmd_stats(args):
         if args.report == "<auto>" or not args.report:
             user_info = detect_user(project_root)
             stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H%M%S")
-            report_path = (project_root / ".hs" / user_info["user"] /
-                           "CM" / "_reports" / f"CL_USAGE_{stamp}.md")
+            report_path = (project_root / "cl-reports" / user_info["user"] /
+                           f"CL_USAGE_{stamp}.md")
         else:
             report_path = Path(args.report)
             if not report_path.is_absolute():
@@ -1317,6 +1347,9 @@ def cmd_stats(args):
         report_path.parent.mkdir(parents=True, exist_ok=True)
         with open(report_path, "w", encoding="utf-8", newline="\n") as f:
             f.write(md)
+
+        # Obsidian junction 자동 등록 시도 (silent fail)
+        _maybe_register_obsidian_junction(project_root, "cl-reports", "-cl")
 
         try:
             rel = str(report_path.relative_to(project_root)).replace("\\", "/")
@@ -1377,7 +1410,7 @@ def build_parser():
     p.add_argument("--active-only", action="store_true", dest="active_only")
     p.add_argument("--ended-only", action="store_true", dest="ended_only")
     p.add_argument("--report", nargs="?", const="<auto>", default=None,
-                   help="마크다운 리포트 생성. 경로 생략 시 .hs/<user>/CM/_reports/")
+                   help="마크다운 리포트 생성. 경로 생략 시 cl-reports/<user>/")
     p.add_argument("--charts", default="all",
                    help="포함 차트: users-pie,topics-bar,daily-line,models-pie,all,none")
     p.set_defaults(fn=cmd_stats)

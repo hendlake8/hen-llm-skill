@@ -222,7 +222,7 @@ find ~/.claude/plugins -path "*hs/scripts/cm_state.py" 2>/dev/null | head -1
 ```
 /hs:cl-stats 그래프로 저장해줘
 ```
-→ `--charts all --report` 매핑. `.hs/{user}/CM/_reports/CL_USAGE_*.md` 생성.
+→ `--charts all --report` 매핑. `cl-reports/{user}/CL_USAGE_*.md` 생성 (git tracked, 안전 공유).
 
 ### 최근 일주일 + Top 5
 ```
@@ -247,6 +247,6 @@ find ~/.claude/plugins -path "*hs/scripts/cm_state.py" 2>/dev/null | head -1
 ## Next Step
 - 다른 view 보기 → 자연어로 "사용자별", "토픽별", "Top 5" 등
 - 리포트 저장 → "저장해줘" 또는 직접 `--report`
-- 정리 → 사용자가 `.hs/{user}/CM/_reports/` 직접 정리
+- 정리 → 사용자가 `cl-reports/{user}/` 직접 정리
 
 This skill itself takes no further action automatically.

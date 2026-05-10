@@ -137,18 +137,22 @@ Docs/DEVELOPMENT/Dev/{시스템명}/
     - Windows: `setx OBSIDIAN_VAULT "D:\path\to\vault"` (cmd) 또는 시스템 환경 변수에서 직접 설정
     - Unix: `export OBSIDIAN_VAULT=/path/to/vault` (`.bashrc` / `.zshrc` 등에 영속화)
 - **등록 스크립트**: `~/.claude/register_vault.ps1`
-- **트리거**: `Docs/` 폴더에 최초 파일 생성 시에만 실행
-- **대상**: `Docs/` 폴더에 대해서만 동작 (다른 경로의 문서 생성은 무관)
+- **자동 등록 대상**:
+  - `Docs/` 폴더 — junction 이름: `{프로젝트명}`. **LLM 트리거**: `Docs/` 에 첫 파일 생성 시 LLM 이 직접 호출.
+  - `cl-reports/` 폴더 — junction 이름: `{프로젝트명}-cl`. **자동 트리거**: hen-llm-skill 의 `cm_state.py stats --report` 가 첫 리포트 생성 시 자체 호출 (LLM 관여 X).
+- **다른 경로**: 자동 등록 대상 아님 (수동 호출 필요).
 
-**실행 명령** (VaultPath 생략 시 `OBSIDIAN_VAULT` 환경 변수 자동 사용):
+**LLM 이 호출해야 하는 경우** (Docs/ 트리거):
 ```bash
+# VaultPath 생략 시 OBSIDIAN_VAULT 자동 사용
 powershell -NoProfile -ExecutionPolicy Bypass -File ~/.claude/register_vault.ps1 -ProjectRoot "{프로젝트루트}"
 ```
 
-또는 명시적 지정:
+다른 폴더를 수동으로 등록하려면 `-Subfolder` / `-NameSuffix` 사용:
 ```bash
-powershell -NoProfile -ExecutionPolicy Bypass -File ~/.claude/register_vault.ps1 -VaultPath "$env:OBSIDIAN_VAULT" -ProjectRoot "{프로젝트루트}"
+powershell -NoProfile -ExecutionPolicy Bypass -File ~/.claude/register_vault.ps1 `
+  -ProjectRoot "{프로젝트루트}" -Subfolder "cl-reports" -NameSuffix "-cl"
 ```
 
-- 스크립트가 vault 경로·Docs 폴더 존재·junction 중복을 자동 검증
+- 스크립트가 vault 경로·대상 폴더 존재·junction 중복을 자동 검증
 - PC가 바뀌면 `OBSIDIAN_VAULT` 환경 변수만 수정

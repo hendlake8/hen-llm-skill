@@ -143,9 +143,13 @@ hen-llm-skill/
     └── ...
 ```
 
-## 런타임 상태 (gitignore 대상)
+## 런타임 상태
 
-각 프로젝트에서 hs 사용 시 자동 생성:
+각 프로젝트에서 hs 사용 시 자동 생성. `{user}` 는 git user.name → OS 사용자 자동 추출 (다중 개발자 격리).
+
+### 로컬 전용 (`.hs/` — gitignore 대상)
+
+채팅 본문, 진행 상태 등 사적 데이터. **절대 공유 금지**.
 
 ```
 <project>/.hs/{user}/
@@ -154,11 +158,22 @@ hen-llm-skill/
 │   └── {plan}/progress.yaml      # plan별 진행 상태
 └── CM/
     └── {topic}/
-        ├── CM_STATE.json
-        └── Phase_NN/CHAT_LOG.md
+        ├── CM_STATE.json         # 토픽 메타 + 토큰/시간 누적
+        └── Phase_NN/CHAT_LOG.md  # 풀 채팅 로그 (도구 호출 결과 포함)
 ```
 
-`{user}`는 git user.name → OS 사용자 자동 추출. 다중 개발자 환경에서 격리.
+### 공유 가능 (`cl-reports/` — git tracked)
+
+cl-stats 가 생성하는 사람용 마크다운 리포트. 채팅 본문 없이 집계 메트릭 + Mermaid 그래프만 포함.
+
+```
+<project>/cl-reports/{user}/
+└── CL_USAGE_{YYYY-MM-DD_HHMMSS}.md  # 토픽별/사용자별/전체 통계
+```
+
+> 📌 토픽명에 민감한 식별자가 들어갈 수 있으니 public repo 에 push 전 검토 권장.
+
+> 🔗 `OBSIDIAN_VAULT` 환경변수가 설정된 Windows 환경이면, `cl-stats --report` 첫 실행 시 vault 에 `{프로젝트명}-cl` junction 이 자동 등록됨 (Obsidian 에서 즉시 열람 가능).
 
 ## 글로벌 설정 유지보수
 

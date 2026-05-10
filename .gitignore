@@ -16,7 +16,8 @@ Thumbs.db
 # Backups
 *.bak
 
-# hs runtime state (per-user, per-project — never share)
+# hs runtime — 채팅 본문(CHAT_LOG.md) + 메타데이터. 절대 공유 금지.
+# (cl-stats 마크다운 리포트는 cl-reports/ 에 별도 저장 — git tracked)
 .hs/
 
 # Claude Code project local settings (allowlist, personal)
