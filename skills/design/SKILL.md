@@ -114,6 +114,15 @@ brainstorm → design → workflow → plan → implement
 - "이 시스템", "이 기능" → 단일 시스템.
 - "전체 아키텍처", "프로젝트 전반" → multi-system, scope 합의 필요.
 
+### Stability emphasis
+- 기본 → `balanced` (현재 요구사항 충족 + 합리적 확장 여지).
+- "확장성", "호환성", "공용 모듈", "외부 호출자",
+  "마이그레이션", "deprecate", "API 안정성" → `stability-first`.
+- "프로토타입", "임시", "실험" → `experimental`
+  (호환성 검토 생략, 빠르게).
+
+depth와 직교 — quick + stability-first 가능 (간단하지만 호환성은 본다).
+
 If genuinely ambiguous after inference, ask ONE short clarifying
 question before proceeding. Do not ask if a reasonable default fits.
 
@@ -185,6 +194,16 @@ Type-specific guidance:
 - **database** — entities, fields with types/constraints, relationships,
   Mermaid `erDiagram`, indexes / partitioning notes.
 
+### Stability-first 모드일 때 추가로 다루는 것
+- **확장 포인트 명시** — 어디에 future hook이 들어가는지 (override 지점,
+  옵션 파라미터, strategy 분리). YAGNI 룰 우선 — 추측성 후보 금지,
+  현재 명시된 변경 축에 한정.
+- **인터페이스 우선** — 구현체보다 contract부터.
+- **버전 호환** — 새 필드/메서드는 optional, 기존 시그니처 보존.
+- **호환성 영향 범위** — `find_referencing_symbols`로 호출자 전수조사.
+  `deep` 또는 multi-system 범위면 system-architect subagent 위임 검토
+  (Subagent integration 참조).
+
 ### Step 4 — Validate (strong, checklist-driven)
 Build an explicit verification checklist and walk through it:
 
@@ -198,6 +217,12 @@ Build an explicit verification checklist and walk through it:
   (technology pick, threshold value, priority trade-off).
 - **Stated assumptions** — assumptions the design relies on that
   could be wrong.
+- **호환성 영향** (stability-first일 때 필수) — 기존 호출자가 이 변경으로
+  깨지는지. 깨진다면 마이그레이션 경로는?
+- **확장 포인트** (stability-first일 때 필수) — 향후 변경 가능성이 높은
+  축은 무엇이고, 어디서 갈아끼울 수 있는지. 추측성 후보 금지.
+- **deprecate 단계** (기존 인터페이스를 바꾸는 경우) — 단계별 전환 경로
+  (새 API 추가 → 기존 deprecate → 제거).
 
 If validation surfaces critical issues, STOP and surface them.
 Do not paper over gaps.
@@ -248,6 +273,23 @@ public interface IFoo
 ## 요구사항 충족 검증
 - [x] 요구사항 1 — {how the design covers it}
 - [ ] 요구사항 2 — **누락**: {what's missing or deferred}
+
+## 확장성·호환성 검토 (stability-first 모드 한정)
+### 호환성 영향
+- 기존 호출자: {find_referencing_symbols 결과}
+- 깨지는 호출: {목록 또는 "없음"}
+- 마이그레이션 경로: {단계별}
+
+### 확장 포인트
+- {지점 1}: {왜 여기에}
+  - 현재 필요 여부: {필요/추측성}
+  - 근거: {1줄 — "지금 필요한가?" 검증}
+- {지점 2}: ...
+
+### Deprecate 단계 (해당 시)
+1. v{x}: 새 API 추가, 기존 유지
+2. v{y}: 기존 API에 [Obsolete] 표시
+3. v{z}: 기존 API 제거
 
 ## 미해결 / 추후 결정 사항
 - {open decision 1} — {options + recommendation if any}
@@ -311,6 +353,29 @@ spreadsheet data:
 - All MCPs are optional. Silent fallback to built-in tools.
 - Do NOT mention MCP names in user-facing output.
 
+## Subagent integration (stability-first 위임)
+
+### system-architect — stability-first AND (deep OR multi-system)
+조건 모두 충족 시 호환성·확장성 분석을 격리 컨텍스트에서 위임 검토:
+- stability emphasis = `stability-first`
+- AND (depth = `deep` OR scope = multi-system)
+
+위임 시 brief 포함:
+- 대상 시스템 / 변경 범위 (메인에서 합의된 설계 본체)
+- 기존 설계 / 호출자 후보 (메인 사전 조사 결과)
+- 사용자 글로벌 룰 인용 (YAGNI / simple-first / 추측성 확장 금지)
+- 기대 출력: hs:design Output structure의 `## 확장성·호환성 검토`
+  섹션 형식
+
+설계 본체는 메인에서 작성. system-architect는 호환성 영향 + 확장 포인트
++ 마이그레이션 경로 분석만 담당. agent 결과를 메인 Output structure에
+끼워넣어 사용자에게 통합 보고.
+
+기본 / quick / single-system stability 작업은 메인에서 직접 처리 —
+subagent 오버헤드 회피.
+
+Fallback: agent 호출 실패 시 메인에서 직접 분석 진행 (silent fallback).
+
 ## Boundaries
 
 **Will:**
@@ -330,6 +395,8 @@ spreadsheet data:
 - Treat game-system or game-data-schema design as in-scope —
   redirect to `/hs-gd:design` track.
 - Auto-invoke other skills.
+- Add speculative extension points without grounding in current
+  change axes (YAGNI — even in stability-first mode).
 - Inject any persona or override user rules.
 
 ## Examples
@@ -364,6 +431,15 @@ spreadsheet data:
 ```
 → Produces ER diagram + field tables + index notes. Validates
    query patterns implied by the requirements.
+
+### Stability-first component design
+```
+/hs:design 결제 모듈 IPaymentProcessor 인터페이스 — 외부 결제사
+3곳이 호출하니까 호환성 깨지지 않게
+```
+→ Inferred: api/component, stability-first. find_referencing_symbols로
+   호출자 매핑. 인터페이스 contract + 확장 포인트 + 호환성 검토 섹션
+   포함. deep + multi-system이면 system-architect subagent 위임 검토.
 
 ### Game system request → redirect
 ```
