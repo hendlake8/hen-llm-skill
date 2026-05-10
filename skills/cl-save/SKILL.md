@@ -88,6 +88,12 @@ python {PLUGIN_ROOT}/scripts/cm_state.py save [topic]
 - 파일: {chat_log_path}
 - 메시지 수: {messages_written}
 - 크기: {file_size_bytes:,} bytes
+- 작업 시간: {duration_human} ({duration_seconds}초)
+
+📊 토큰 사용량 (모델: {tokens.model}{partial일 때 " — partial"})
+- 입력: {tokens.input:,} / 출력: {tokens.output:,}
+- 캐시 생성: {tokens.cache_creation:,} / 캐시 읽기: {tokens.cache_read:,}
+- 캐시 적중률: {cache_hit_ratio}% / 분당: {tokens_per_minute:,} tok/min
 
 🔄 Phase {next_phase:02d} 자동 시작됨
 - 시작 시각: {next_phase_started_at}
@@ -97,6 +103,11 @@ python {PLUGIN_ROOT}/scripts/cm_state.py save [topic]
 - 작업 계속 → 다음 Phase에서 자동 추적
 - 종료 시 → /hs:cl-end
 ```
+
+**렌더링 주의**:
+- `tokens.model` 이 `"mixed"` 면 그대로 노출 (phase 중 모델 전환 발생).
+- `tokens.partial` 이 `true` 면 모델명 옆에 "— partial (세션 변경 감지)" 표시.
+- `tokens.message_count == 0` (assistant turn 없음) 이면 토큰 블록 생략 가능.
 
 ### Step 5 — Output policy
 - 파일 생성은 스크립트가 atomic 처리.

@@ -87,6 +87,22 @@ python {PLUGIN_ROOT}/scripts/cm_state.py end [topic]
 - 메시지 수: {messages_written}
 - 크기: {file_size_bytes:,} bytes
 - 종료 시각: {ended_at}
+- 마지막 Phase 작업 시간: {duration_human}
+
+📊 마지막 Phase 토큰 (모델: {tokens.model})
+- 입력: {tokens.input:,} / 출력: {tokens.output:,}
+- 캐시 생성: {tokens.cache_creation:,} / 캐시 읽기: {tokens.cache_read:,}
+
+📈 세션 누적 (session_summary)
+- 총 작업 시간: {session_summary.totalDurationSeconds}초
+  ({session_summary.totalDurationSeconds → format_duration})
+- Phase 수: {session_summary.phaseCount} (완료 {session_summary.completedPhases})
+- 총 토큰:
+  - 입력: {session_summary.totalTokens.input:,}
+  - 출력: {session_summary.totalTokens.output:,}
+  - 캐시 생성: {session_summary.totalTokens.cacheCreation:,}
+  - 캐시 읽기: {session_summary.totalTokens.cacheRead:,}
+- 사용 모델: {session_summary.models join ", "}
 
 📁 보존된 기록:
 .hs/{user}/CM/{topic}/
@@ -100,6 +116,12 @@ python {PLUGIN_ROOT}/scripts/cm_state.py end [topic]
 - 기록 검토 → 위 폴더 직접 열어보기
 - 정리 → 폴더 수동 삭제 (필요 시)
 ```
+
+**렌더링 주의**:
+- `session_summary.totalDurationSeconds` 는 초 단위 정수. 사람 읽기용으로 "1시간 5분 30초" 식 변환 (cm_state.format_duration 과 동일 규칙).
+- `tokens.model` 이 `"mixed"` 면 그대로 노출.
+- `tokens.partial == true` 이면 모델명 옆에 "— partial" 표시.
+- `models` 가 빈 배열이면 "(미측정)" 표시.
 
 ### Step 5 — Output policy
 - 마지막 Phase의 CHAT_LOG.md 작성 + active=false.
