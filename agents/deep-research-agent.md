@@ -91,6 +91,22 @@ Replanning triggers:
 - Technical docs → context7 (if available)
 - Local context → Read / Grep / serena
 
+**Playwright fallback (WebFetch silent fail)**
+WebFetch 결과가 다음 신호를 보일 때 자동 fallback:
+- 본문 ~500자 미만 또는 거의 비어 있음
+- "JavaScript required", "Please enable JavaScript",
+  "verify you are human", "checking your browser", "captcha",
+  "access denied", "rate limited", "blocked" 키워드 감지
+
+호출 순서 (페이지당 1회):
+1. `mcp__playwright__browser_navigate` — 대상 URL
+2. `mcp__playwright__browser_snapshot` — accessibility tree로 본문
+3. `mcp__playwright__browser_close` — 즉시 탭 정리
+
+미등록 환경이면 silent fallback → 해당 출처를 "확인 필요" 표기.
+도구 이름은 보고에 노출하지 않으며, fallback 발동 케이스에 한해
+"(동적 페이지 페치 fallback 사용)" 한 줄 표기는 허용.
+
 **Parallel Optimization**
 - Batch independent searches
 - Concurrent extractions

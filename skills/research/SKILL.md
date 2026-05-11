@@ -90,6 +90,8 @@ How:
    - Inferred depth and focus.
    - Required output format (citations as `[n]` + source list).
    - Cap on report length appropriate to depth.
+   - "Playwright MCP 도구가 가용하면 WebFetch silent fail 시
+     동적 페이지 fallback 으로 사용 가능" 한 줄 명시.
 3. Wait for the subagent's synthesized result.
 4. Present the result to the user in Korean (the subagent may return
    English; translate or summarize as needed).
@@ -118,6 +120,9 @@ Subagent overhead exceeds value at this scale.
   follow up with second-hop searches.
 - **Smart fetching** — for promising results, WebFetch the full page;
   skip fetching when the snippet already answers.
+- **Fallback on silent fail** — WebFetch 결과가 트리거 조건 충족 시
+  (MCP integration → playwright-mcp 참조) 동적 페이지 fallback 으로
+  재시도. fallback도 실패하면 해당 출처를 "확인 필요" 로 표기.
 - Track every claim with a source URL — no claim without a source.
 
 ### Step 4 — Validate (10–15% effort)
@@ -184,6 +189,8 @@ Output structure (in Korean):
   searches in a single tool-use block whenever queries are independent.
 - **WebFetch (built-in)** — fetch promising URLs for full content.
 - **Read** — when the user references local files as research anchors.
+- **Playwright MCP** — WebFetch silent fail (빈/JS 요구/봇차단) 시
+  동적 페이지 fallback. 자세한 정책은 MCP integration 참조.
 
 ## MCP integration (use when conditions match)
 
@@ -213,6 +220,40 @@ When the research involves comparing against existing spreadsheet
 data (balance tables, market data):
 - Read-only flow: `file` (open) → `range` (read) → close (save:false).
 - Skip for greenfield numeric questions — built-in tools suffice.
+
+### playwright-mcp — WebFetch fallback (동적·SPA·봇차단 페이지)
+
+WebFetch가 페이지 본문을 제대로 못 가져왔을 때 자동 fallback.
+
+#### 진입 트리거 (다음 신호 중 하나)
+- WebFetch 응답 본문이 매우 짧음 (~ 500자 미만) 또는 거의 비어 있음.
+- 다음 키워드 감지: "JavaScript required", "Please enable JavaScript",
+  "verify you are human", "checking your browser", "captcha",
+  "access denied", "rate limited", "blocked".
+- 사용자가 명시 ("브라우저로 다시", "playwright로", "동적 페이지 같아").
+
+알려진 SPA 도메인을 미리 화이트리스트하지 않음 (YAGNI — 신호 기반으로 충분).
+
+#### 호출 순서
+1. `mcp__playwright__browser_navigate` — 대상 URL.
+2. `mcp__playwright__browser_snapshot` — accessibility tree로 본문 추출
+   (스크린샷/vision 불필요).
+3. `mcp__playwright__browser_close` — 즉시 탭 정리 (메모리 누수 방지).
+
+위 3단계는 한 페이지당 1회 흐름. 다음 URL은 새 navigate부터.
+
+#### 결과 처리
+- snapshot 의 텍스트 콘텐츠를 WebFetch 결과 대신 사용.
+- 인용 시 출처 URL은 그대로, 도구 이름은 노출 안 함.
+- fallback이 실제로 발동한 케이스에 한해 메인 보고에 한 줄 표기
+  허용: "(동적 페이지 페치 fallback 사용)" 정도. 사용자가 무슨 일이
+  일어났는지 추적 가능하게.
+
+#### Playwright MCP 미등록 환경
+- 도구가 가용하지 않으면 silent fallback → WebFetch 결과를 그대로
+  쓰되, 본문이 빈약함을 보고에 명시 ("정적 페치로는 본문 추출 불가
+  — 동적 페이지로 추정됨").
+- 강제 의존 X. 다른 MCP integration 정책과 동일.
 
 ### gemini-video — only when input includes a video
 Trigger only if the user provides a video file as research material.

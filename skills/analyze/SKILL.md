@@ -31,6 +31,8 @@ header in this exact format:
 
 Example:
 - 🔍 [hs:analyze] code mode, quality focus, deep depth
+- 🔍 [hs:analyze] code mode, deep, multi-agent (4 perspectives)
+- 🔍 [hs:analyze] code mode, security focus, deep (security-engineer)
 
 Leave a blank line after the header, then proceed with the skill's
 normal output.
@@ -97,6 +99,9 @@ question before proceeding. Do not ask if a reasonable default fits.
 
 ### Step 2 — Scan
 Domain-specific by inferred focus:
+
+> `code` 모드 + `depth = deep` 인 경우, 본 단계는 Subagent integration
+> 섹션의 분기로 위임된다. 그 외 경우 아래 도메인별 절차를 메인에서 실행.
 
 **Code domains**
 - `quality` — smells, complexity, naming, duplication, dead code.
@@ -175,6 +180,7 @@ Built-in text tools are fallbacks, not the default path.
 - **Glob** — file discovery, project shape.
 - **Read** — focused inspection of specific files / sections.
 - **Bash** — read-only commands only (e.g., `git log`, listings). No mutating commands.
+- **Agent** — code + deep 분기에서 격리 시각 호출 (Subagent integration 참조).
 
 ### Mode-specific defaults
 - `code` → serena first, Grep/Read fallback.
@@ -216,12 +222,102 @@ Trigger only if the user explicitly hands over a video file to analyze
 - Do NOT block, retry, or warn the user about missing MCPs.
 - Do NOT mention MCP names in the user-facing report — only the findings.
 
+## Subagent integration (code + deep 한정)
+
+### 활성화 조건 (모두 충족)
+- mode = `code`
+- depth = `deep`
+- 토큰 비용 큰 작업 — 사용자가 명시적으로 "깊게" / "꼼꼼히" / "다 봐줘"
+  표현했을 때만 진입. 미지정 깊이는 `quick` 이므로 자동 trigger 안 됨.
+
+활성화 조건 미충족 시 기존 메인 컨텍스트 흐름 유지 (회귀 없음).
+
+### 시각 선택
+
+#### focus 미지정 → 다중 시각 (병렬 4개)
+한 메시지에서 Agent tool을 4번 동시 호출:
+
+| Subagent | 담당 도메인 |
+|----------|------------|
+| **quality-engineer** | quality (스멜, 복잡도, 중복, 데드 코드, 네이밍) |
+| **security-engineer** | security (입력 검증, 인증/권한, 인젝션, 시크릿) |
+| **refactoring-expert** | architecture (결합도, 레이어링, 순환 의존, 경계 누수) |
+| **general-purpose** | performance (핫 패스, 할당, sync I/O, N+1, big-O) |
+
+→ 격리 컨텍스트 4개. 메인은 합성만 담당.
+
+#### focus 지정 → 단일 전문가
+- `quality` → quality-engineer
+- `security` → security-engineer
+- `architecture` → refactoring-expert
+- `performance` → general-purpose + 성능 brief
+
+### Brief 템플릿 (자기충족적)
+
+각 subagent에 다음 형식으로 전달:
+
+```
+[배경]
+사용자 코드베이스 정적 분석 요청. /hs:analyze (code 모드, deep, focus={domain}).
+read-only 진단 — 코드 수정 금지.
+
+[분석 대상]
+- 경로: {target_paths}
+- 언어/플랫폼: {detected}
+- 구조 개요 (메인 사전조사):
+  {serena get_symbols_overview / Glob 결과 요약}
+- 관련 컨텍스트:
+  {호출자/의존성 — find_referencing_symbols 결과, 있으면}
+
+[주의: 사용자 글로벌 룰 — 위반 여부 명시 검토]
+- 암묵적 비교 금지: if (obj == null), if (count > 0) 형식 강제
+- 시그널버스 / 글로벌 이벤트 브로커 금지
+- Unity 한정: asmdef 자동 생성 금지, AssetDatabase 런타임 사용 금지
+- 한국어 주석 / 영어 식별자
+- 과도한 추상화 / 추측성 미래 대비 금지 (YAGNI)
+- 사용자 룰 파일 경로: ~/.claude/rules/*.md
+
+[요청 시각: {domain}]
+{domain별 강조점 — quality / security / architecture / performance 중 하나}
+
+[기대 출력 — 한국어, 200-400자]
+## 발견 사항 (심각도별)
+- Critical: {file_path}:{line} — {issue} / 권장: {action}
+- High: ...
+- Medium: ...
+- Low: ...
+
+## 사용자 룰 위반 (있으면)
+- {file_path}:{line} — {룰명}: {설명} / 수정 방향: {action}
+
+## 의문점 / 추가 정보 필요 (있으면)
+```
+
+### Synthesis (Step 3·4 흡수)
+
+여러 subagent 결과 받은 후 메인에서:
+
+- **dedupe** — 같은 `file_path:line` + 유사 이슈 → 1개로 합치고
+  `시각: quality, security` 처럼 다중 표기.
+- **충돌 보존** — 시각 간 모순 (예: refactoring-expert는 추상화 추가 권장,
+  quality-engineer는 단순화 권장) → 양쪽 의견 모두 보존,
+  사용자 결정 안내 한 줄 추가.
+- **우선순위** — Critical → High → Medium → Low. 동일 심각도 내:
+  영향 범위 → 신뢰도 → 다중 시각 합의 여부 순.
+
+### Fallback policy
+- Agent 호출 실패 silent fallback → 메인 컨텍스트 직접 분석.
+- 사용자 보고에 agent 사용 사실 텍스트로 언급 안 함.
+- 다만 activation 헤더에 `multi-agent` 태그로 가시성만 확보
+  (예: "code mode, deep, multi-agent (4 perspectives)").
+
 ## Boundaries
 
 **Will:**
 - Perform multi-target analysis (code / data / docs) across selected domains.
 - Produce severity-rated findings with concrete recommendations.
 - Auto-detect target type and adapt the flow.
+- For `code` + `deep`: 격리된 다중/단일 subagent 시각으로 분석 후 합성.
 
 **Will Not:**
 - Modify source code, data, or documents.
@@ -236,13 +332,26 @@ Trigger only if the user explicitly hands over a video file to analyze
 ```
 /hs:analyze src/Combat 코드 품질 깊게 봐줘
 ```
-→ Inferred: code, quality focus, deep. Findings shown inline.
+→ Inferred: code, quality focus, deep → quality-engineer 단독 호출 후 합성.
 
-### Security audit
+### Multi-perspective deep sweep
+```
+/hs:analyze src/Combat 깊게 다 봐줘
+```
+→ code, focus 미지정, deep → quality + security + architecture + performance
+   4개 agent 병렬 호출. 결과 dedupe + 충돌 보존 + 우선순위화.
+
+### Security deep dive
+```
+/hs:analyze src/Auth 보안 위주로 꼼꼼히
+```
+→ code, security focus, deep → security-engineer 단독.
+
+### Security audit (quick)
 ```
 /hs:analyze src/Auth 보안 취약점 검사
 ```
-→ Inferred: code, security focus. Severity-rated findings.
+→ Inferred: code, security focus, quick → 메인 컨텍스트에서 직접 진단.
 
 ### Game balance data
 ```

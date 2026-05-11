@@ -26,6 +26,9 @@ Thumbs.db
 # Serena project state
 .serena/
 
+# Playwright MCP — snapshot / console log 산출물
+.playwright-mcp/
+
 # Tmp / logs
 *.tmp
 *.log
