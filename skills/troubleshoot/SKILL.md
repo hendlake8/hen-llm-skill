@@ -283,6 +283,21 @@ implement / refactor / cleanup은 변경.
 게임 데이터 회귀 ("이 패치 후 보스가 너무 강함") 같은 케이스에서
 기존 데이터 비교 시 read-only.
 
+### playwright — UI / 렌더링 / 브라우저 동작 진단 시 (조건부)
+다음 패턴일 때 활용:
+- 웹 / SPA UI 버그 ("이 페이지가 안 뜸", "버튼이 반응 없음").
+- 콘솔 에러 / 네트워크 요청 실패가 의심되는 케이스.
+- 동적 페이지 / SPA / 봇 차단 페이지 본문 확인 필요.
+
+플로우:
+1. `mcp__playwright__browser_navigate` — 대상 URL.
+2. `mcp__playwright__browser_snapshot` — accessibility tree 로 본문/구조 추출.
+3. `mcp__playwright__browser_console_messages` — JS 에러 / 경고 수집.
+4. `mcp__playwright__browser_network_requests` — 실패한 요청 식별.
+5. `mcp__playwright__browser_close` — 즉시 탭 정리.
+
+서버 / CLI / 네이티브 버그엔 무관 — 적용 영역을 좁게 유지.
+
 ### gemini-video — 비디오 단서 시 (드뭄)
 사용자가 버그 영상 / 게임플레이 캡처 제공 시.
 

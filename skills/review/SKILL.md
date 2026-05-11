@@ -273,7 +273,7 @@ git diff main...HEAD
 - **Read** — 명시 파일 / range.
 - **Grep / Glob** — 컨텍스트 보조.
 - **Agent** — subagent 호출 (핵심).
-- **serena** — 변경 영향 / 호출자 분석 (조건부).
+- **serena** — 변경 영향 / 호출자 분석 (preferred).
 
 ## Subagent integration (핵심)
 
@@ -304,14 +304,26 @@ git diff main...HEAD
 
 리뷰 대상 코드 분석 시 보조 MCP:
 
-### serena — 코드 컨텍스트 anchor 시
-- `find_referencing_symbols` — 변경 영향 범위 사전 파악.
+### serena — 변경 영향 분석의 핵심 (preferred)
+리뷰의 본질은 "이 변경이 어디까지 영향을 미치는가" — serena 의 의미
+기반 도구로 grep 보다 정확한 영향 범위 산정.
+- `find_referencing_symbols` — 변경된 심볼의 호출자 / 의존자 식별.
 - `get_diagnostics_for_file` — 컴파일러/LSP 진단 같이 보고.
-- subagent에 컨텍스트 brief 전 메인에서 활용 가능.
+- `find_implementations` — 인터페이스 / 추상 클래스 변경 시 구현체 추적.
+- subagent에 컨텍스트 brief 전 메인에서 활용 가능 (각 subagent 가
+  중복 호출하지 않도록 영향 범위 사전 정리).
 
 ### context7 — 라이브러리 사용 검증 시
 - 변경에 새 API / 라이브러리 사용 → 권위 정보 확인.
 - 평소엔 사용 안 함.
+
+### sequential-thinking — 대형 / 다층 변경 PR 에서만
+다음 조건일 때 활용:
+- 변경 파일 ≥ 10개 AND 다중 모듈 경계 교차.
+- 아키텍처 레이어 변경 (계층 의존 방향 / 순환 가능성 검토 필요).
+- 단계적 영향 추적 필요 (A 변경 → B 영향 → C 의존성 갱신 누락 여부).
+
+소형 PR / 단일 파일 수정엔 오버헤드 — 패턴 매칭 스캔으로 충분.
 
 ### 기타 MCP는 거의 무관.
 
