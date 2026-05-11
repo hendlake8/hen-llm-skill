@@ -93,6 +93,11 @@ question before proceeding. Do not ask if a reasonable default fits.
 ## Behavioral Flow
 
 ### Step 1 — Discover
+- **사용자가 분석 대상 파일/경로를 명시했으면 Read 우선.** grep/glob
+  만으로 "관련 없음" 또는 "low priority" 판정 내리지 않는다. 키워드
+  0 매치는 "근거 부족" 신호이지 "관련 없음" 결론이 아니다. 본문을
+  확인한 뒤 판정한다. (형식적 Low 분류 금지 — "평가 보류 / 본문
+  확인 필요" 로 표기.)
 - `code` mode — enumerate sources via Glob; group by language/module.
 - `data` mode — identify schema, sample rows, value ranges, units.
 - `doc` mode — identify sections, intent, audience, structural completeness.

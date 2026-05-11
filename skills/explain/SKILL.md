@@ -91,6 +91,11 @@ simple-first 룰 준수: 사용자가 명시 요청하지 않으면 옵션 / 비
 
 ### Step 2 — Gather facts (lazy — 필요 시만)
 
+**사용자가 특정 파일/심볼/라인 (예: `Foo.cs:142`, `ApplyDamage`) 을
+명시했으면 그 위치 본문을 먼저 확인한다.** serena `find_symbol` /
+Read 우선. grep 만으로 답변하지 않는다. 키워드 0 매치는 "없음"
+결론이 아니라 "근거 부족" 신호.
+
 #### code 타입
 - serena `get_symbols_overview` — 모듈 / 파일 구조.
 - serena `find_symbol` — 특정 심볼 위치 + 시그니처.

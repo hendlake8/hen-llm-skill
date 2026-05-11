@@ -68,6 +68,7 @@ normal output.
 - "현재 트렌드/최근 변화" → web-first
 - "이 프로젝트에 적용하려면" → serena anchor + web
 - "수치/통계/데이터" → web + excel-mcp if existing tables exist
+- "OSS 사례 / 비슷한 구현 / GitHub 이슈 / 릴리즈 노트" → gh CLI-first
 
 If genuinely ambiguous after inference, ask ONE short clarifying
 question before proceeding. Do not ask if a reasonable default fits.
@@ -191,6 +192,9 @@ Output structure (in Korean):
 - **Read** — when the user references local files as research anchors.
 - **Playwright MCP** — WebFetch silent fail (빈/JS 요구/봇차단) 시
   동적 페이지 fallback. 자세한 정책은 MCP integration 참조.
+- **gh CLI (외부)** — GitHub anchored 리서치 시 우선. 코드/이슈/PR/릴리즈
+  인용에 `gh search code|repos|issues`, `gh issue view`, `gh release view`
+  등 사용. 자세한 정책은 MCP integration → gh CLI 절 참조.
 
 ## MCP integration (use when conditions match)
 
@@ -220,6 +224,41 @@ When the research involves comparing against existing spreadsheet
 data (balance tables, market data):
 - Read-only flow: `file` (open) → `range` (read) → close (save:false).
 - Skip for greenfield numeric questions — built-in tools suffice.
+
+### gh CLI — GitHub anchored 리서치 시 (인증 API 직호출)
+
+GitHub 도메인 리서치에서 WebSearch / WebFetch 보다 정확하고 안정적.
+github.com 페이지는 JS 렌더 비율이 높아 WebFetch 가 본문을 못 가져오면
+Playwright fallback 까지 가야 하는데, gh CLI 는 인증 API 직호출이라
+가장 가볍고 정확.
+
+#### 진입 트리거 (다음 중 하나)
+- 사용자 질의에 "GitHub", "오픈소스 사례", "issue", "PR", "release notes",
+  "변경 이력" 등 명시.
+- 라이브러리 / 프레임워크 리서치 + "어떻게 쓰는지 사례" 또는
+  "버그 / 이슈 보고" 측면 (context7 가 공식 문서를 다루면, gh 는
+  실제 사용 코드 / 알려진 문제를 다룸 — 상호 보완재).
+- WebFetch 대상이 github.com 도메인일 때 우선 시도.
+
+#### 주요 명령
+- `gh search code "<query>" --language=<lang>` — 실제 사용 사례 코드.
+- `gh search repos "<query>"` — 유사 프로젝트 / 레퍼런스.
+- `gh search issues "<query>" --repo=<owner/repo>` — 알려진 문제 / 토론.
+- `gh issue view <n> --repo=<owner/repo> --comments` — 이슈 전문 + 코멘트.
+- `gh pr view <n> --repo=<owner/repo>` — PR 설명 / 토론.
+- `gh release view <tag> --repo=<owner/repo>` — 릴리즈 노트.
+- `gh api <endpoint>` — 위 명령으로 안 되는 raw GitHub API.
+
+#### 결과 처리
+- 인용 시 출처 URL 은 원래 GitHub 페이지 URL 그대로 유지
+  (도구 호출 결과를 인용하지만 사용자가 직접 열어볼 수 있도록).
+- 사용자에게 도구 이름 노출 안 함 (다른 MCP 정책과 동일).
+
+#### gh 미설치 / 미인증 환경
+- silent fallback → 기존 WebSearch + WebFetch + Playwright 체인 사용.
+- `gh auth status` 가 미인증이면 익명 API 한도 내에서 시도 가능하나,
+  rate limit 빈번 시 silent fallback.
+- 강제 의존 X. 다른 외부 도구 정책과 동일.
 
 ### playwright-mcp — WebFetch fallback (동적·SPA·봇차단 페이지)
 

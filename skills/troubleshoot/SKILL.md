@@ -137,7 +137,12 @@ normal output.
 
 ### Step 4 — Investigate (가설 검증)
 
-가설별로 fact 수집:
+가설별로 fact 수집.
+
+**사용자가 특정 파일/라인 (예: `CombatController:142`) 또는 심볼명을
+명시했으면 그 위치 본문을 먼저 확인한다.** serena `find_symbol` /
+Read 우선. grep 만으로 가설 정리하지 않는다. 키워드 0 매치는
+"무관" 결론이 아니라 "근거 부족" 신호 — 추가 조사 트리거.
 
 #### code 관련
 - **serena** 우선:
