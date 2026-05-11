@@ -32,6 +32,11 @@ Examples:
 - 🔍 [hs:cl-stats] hendlake / 최근 7일 / 리포트 생성
 - 🔍 [hs:cl-stats] 토픽 "API 리팩토링" 단일 / 리포트
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -180,9 +185,10 @@ find ~/.claude/plugins -path "*hs/scripts/cm_state.py" 2>/dev/null | head -1
 
 ## Output policy
 
+**모든 출력 끝에 표준 `## Skill Output Metadata` appendix 의무** — Collected Facts (3-5 fact) + Next Skill Hints. 다음 스킬이 fact 재수집 회피 + 체이닝 시그널 명시 (HSPOLICY_DESIGN 의 "Fact 공유 — Output appendix 강제 규약" 절 참조). **직전 스킬의 appendix 가 있으면 본 스킬 입력으로 우선 사용** — 같은 fact 재수집 회피.
+
 - 대화: 필수 (사람이 읽을 수 있게 한국어 표).
 - 마크다운 파일: `--report` 옵션 시에만 (스크립트가 직접 저장).
-- 다른 스킬 자동 호출 안 함.
 - `/hs:document` 우회 — 데이터 export 는 스크립트 책임 (단일 채널 정책의 "분석 결과 저장" 과 다른 영역).
 
 ## Tool coordination
@@ -202,7 +208,9 @@ find ~/.claude/plugins -path "*hs/scripts/cm_state.py" 2>/dev/null | head -1
 - 어떤 CM 데이터도 변경 (read-only 보장).
 - 비용(USD) 추정 (모델 단가표 별도 트랙).
 - 인터랙티브 / HTML 리포트 (마크다운만).
-- 다른 스킬 자동 호출.
+- Mutating 스킬 자동 호출 금지 (implement / refactor / cleanup / document / plan-* / cl-* 등).
+- Diagnostic 끼리는 사용자 체이닝 시그널 있고 opt-out 없을 때만 자동 호출 허용 (활성). 안전 쌍: analyze→explain, research→brainstorm, troubleshoot→explain.
+- 자동 호출 시 activation header 에 "↳ chained from /hs:이전스킬" 표기 의무.
 
 ## Examples
 

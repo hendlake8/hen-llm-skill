@@ -35,6 +35,11 @@ Examples:
 - 🔍 [hs:refactor] simplify: nested conditionals in TurnManager
 - 🔍 [hs:refactor] move: DamageCalculator → 02.Core/CombatSystem, multi-file, subagent
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -232,6 +237,8 @@ Present a concise summary:
 Do NOT auto-invoke other skills. Do NOT auto-commit.
 
 ## Output policy
+
+**모든 출력 끝에 표준 `## Skill Output Metadata` appendix 의무** — Collected Facts (3-5 fact) + Next Skill Hints. 다음 스킬이 fact 재수집 회피 + 체이닝 시그널 명시 (HSPOLICY_DESIGN 의 "Fact 공유 — Output appendix 강제 규약" 절 참조). **직전 스킬의 appendix 가 있으면 본 스킬 입력으로 우선 사용** — 같은 fact 재수집 회피.
 - Code changes: applied via Write / Edit / MultiEdit / serena AFTER
   pre-flight approval (Step 3).
 - Reports / summaries: conversation only — no separate report file.
@@ -401,7 +408,7 @@ read-only 진단 — 코드 수정 금지 (수정은 메인 담당).
 - Run tests, builds, or `git` commands autonomously.
 - Refactor surrounding code that was not part of the request
   ("scope creep").
-- Auto-invoke other skills (`/hs:test`, `/hs:document`, etc.).
+- 어떤 스킬도 자동으로 호출하지 않음. 사용자 명시 호출만 진입 가능 (Mutating 스킬 — Pre-flight approval 게이트 필수).
 - Save reports to files — that's `/hs:document`'s job.
 - Inject any persona or override user rules.
 - Subagent에 코드 수정 권한 위임 (Step 4 Apply는 메인 전용).

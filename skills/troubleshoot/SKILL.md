@@ -36,6 +36,11 @@ Examples:
 - 🔍 [hs:troubleshoot] regression, 어제부터 빌드 실패
 - 🔍 [hs:troubleshoot] deployment, 프로덕션에서만 응답 없음
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -236,9 +241,10 @@ Read 우선. grep 만으로 가설 정리하지 않는다. 키워드 0 매치는
 implement / refactor / cleanup은 변경.
 
 ## Output policy
+
+**모든 출력 끝에 표준 `## Skill Output Metadata` appendix 의무** — Collected Facts (3-5 fact) + Next Skill Hints. 다음 스킬이 fact 재수집 회피 + 체이닝 시그널 명시 (HSPOLICY_DESIGN 의 "Fact 공유 — Output appendix 강제 규약" 절 참조). **직전 스킬의 appendix 가 있으면 본 스킬 입력으로 우선 사용** — 같은 fact 재수집 회피.
 - 대화 전용. 파일 자동 저장 안 함.
 - 코드 변경 / 파일 수정 절대 안 함 (read-only).
-- 다른 스킬 자동 호출 안 함.
 - 사용자가 "저장해줘" 시 → `/hs:document` 안내.
 
 ## Tool coordination
@@ -314,7 +320,9 @@ quick / normal 깊이는 메인에서 직접 처리. subagent 오버헤드 회�
 - 신뢰도 낮은 가설을 확신처럼 제시 안 함.
 - 사용자 룰 위반 방식의 해결책 추천 안 함
   (예: "이거 try-catch로 감싸면 됨" 같은 안일한 회피책).
-- 다른 스킬 자동 호출 안 함.
+- Mutating 스킬 자동 호출 금지 (implement / refactor / cleanup / document / plan-* / cl-* 등).
+- Diagnostic 끼리는 사용자 체이닝 시그널 있고 opt-out 없을 때만 자동 호출 허용 (활성). 안전 쌍: analyze→explain, research→brainstorm, troubleshoot→explain.
+- 자동 호출 시 activation header 에 "↳ chained from /hs:이전스킬" 표기 의무.
 - 페르소나 주입 / 사용자 룰 무시.
 
 ## Examples

@@ -34,6 +34,11 @@ Examples:
 - 🔍 [hs:design] api: 결제 처리 API 인터페이스
 - 🔍 [hs:design] database: 유저 진행도 스키마
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -271,6 +276,7 @@ public interface IFoo
 - 내부: {project modules referenced}
 
 ## 요구사항 충족 검증
+> 본 체크박스는 design 작성자의 self-validation 마킹 — PLAN task progress 와 다른 영역. PLAN.md 는 SSOT 정책으로 체크박스 폐기됐지만 DESIGN 의 본 섹션은 작성 시점 자체 검증용으로 유지.
 - [x] 요구사항 1 — {how the design covers it}
 - [ ] 요구사항 2 — **누락**: {what's missing or deferred}
 
@@ -305,6 +311,8 @@ Customize sections by design type — omit irrelevant ones, expand
 relevant ones.
 
 ## Output policy
+
+**모든 출력 끝에 표준 `## Skill Output Metadata` appendix 의무** — Collected Facts (3-5 fact) + Next Skill Hints. 다음 스킬이 fact 재수집 회피 + 체이닝 시그널 명시 (HSPOLICY_DESIGN 의 "Fact 공유 — Output appendix 강제 규약" 절 참조). **직전 스킬의 appendix 가 있으면 본 스킬 입력으로 우선 사용** — 같은 fact 재수집 회피.
 - ALWAYS present the design in the conversation only.
 - NEVER create, write, or save design files — even if the result is
   long and structured.
@@ -394,7 +402,8 @@ Fallback: agent 호출 실패 시 메인에서 직접 분석 진행 (silent fall
 - Run / test / build anything.
 - Treat game-system or game-data-schema design as in-scope —
   redirect to `/hs-gd:design` track.
-- Auto-invoke other skills.
+- Pipeline-Stage 스킬 — 산출물이 다음 단계 입력 사양인 본 스킬은 후속이 mutating 이어도 사용자 체이닝 시그널 시 자동 호출 허용 (활성). 활성 체이닝: design → implement, design → document. 단 호출 직전에 mutating 스킬의 자체 Pre-flight approval (Step 3) 은 그대로 수행 — 자동 호출이 변경 승인을 건너뛰는 것은 아님.
+- 자동 호출 시 activation header 에 "↳ chained from /hs:이전스킬 (pipeline)" 표기 의무.
 - Add speculative extension points without grounding in current
   change axes (YAGNI — even in stability-first mode).
 - Inject any persona or override user rules.

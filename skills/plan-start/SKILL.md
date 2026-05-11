@@ -31,6 +31,11 @@ Examples:
 - 🔍 [hs:plan-start] Phase 1-1
 - 🔍 [hs:plan-start] Phase 1-2, resumed
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -159,6 +164,7 @@ python {PLUGIN_ROOT}/scripts/plan_state.py start <phase_id>
   (글로벌 룰 + implement 원칙 준수).
 - plan-complete를 자동으로 호출하지 않음
   (auto_run 모드는 plan-run의 책임).
+- 어떤 스킬도 자동으로 호출하지 않음. 사용자 명시 호출만 진입 가능 (Mutating 스킬 — 상태 변경 작업이므로 명시 진입 필수). 단 plan-run 사전 일괄 승인 모드 하에서는 auto_run 흐름이 plan-complete 자동 호출 — 그 경우도 사용자가 plan-run 호출 시점에 일괄 승인한 범위.
 
 ## Examples
 

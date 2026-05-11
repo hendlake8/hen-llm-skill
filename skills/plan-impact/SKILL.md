@@ -30,6 +30,11 @@ Examples:
 - 🔍 [hs:plan-impact] Phase 1-2
 - 🔍 [hs:plan-impact] Phase 1-2, action: rollback
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -151,7 +156,9 @@ python {PLUGIN_ROOT}/scripts/plan_state.py impact <phase_id> [--action <action>]
 - 시뮬레이션 결과를 자동 적용하지 않음 (사용자가 별도 plan-rollback
   등 호출 필요).
 - 결과를 파일로 저장하지 않음.
-- 다른 스킬 자동 호출.
+- Mutating 스킬 자동 호출 금지 (implement / refactor / cleanup / document / plan-* / cl-* 등).
+- Diagnostic 끼리는 사용자 체이닝 시그널 있고 opt-out 없을 때만 자동 호출 허용 (활성). 안전 쌍: analyze→explain, research→brainstorm, troubleshoot→explain.
+- 자동 호출 시 activation header 에 "↳ chained from /hs:이전스킬" 표기 의무.
 
 ## Examples
 

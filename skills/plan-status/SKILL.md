@@ -33,6 +33,11 @@ Examples:
 - 🔍 [hs:plan-status] Combat, --detail
 - 🔍 [hs:plan-status] (no active plan)
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -187,7 +192,9 @@ JSON의 `current_phase`, `next_suggested`, `auto_run.active` 활용:
 **Will Not:**
 - 어떤 상태도 변경하지 않음 (read-only).
 - 결과를 파일로 저장하지 않음.
-- 다른 스킬을 자동 호출하지 않음.
+- Mutating 스킬 자동 호출 금지 (implement / refactor / cleanup / document / plan-* / cl-* 등).
+- Diagnostic 끼리는 사용자 체이닝 시그널 있고 opt-out 없을 때만 자동 호출 허용 (활성). 안전 쌍: analyze→explain, research→brainstorm, troubleshoot→explain.
+- 자동 호출 시 activation header 에 "↳ chained from /hs:이전스킬" 표기 의무.
 - 페르소나 주입 / 사용자 룰 무시.
 
 ## Examples

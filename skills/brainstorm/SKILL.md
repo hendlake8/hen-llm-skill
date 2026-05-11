@@ -32,6 +32,11 @@ header in this exact format:
 Example:
 - 🔍 [hs:brainstorm] gamedesign topic, socratic mode, normal depth
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -128,6 +133,8 @@ Conclude with:
 - The user chooses what comes next. Do NOT auto-trigger other skills.
 
 ## Output policy
+
+**모든 출력 끝에 표준 `## Skill Output Metadata` appendix 의무** — Collected Facts (3-5 fact) + Next Skill Hints. 다음 스킬이 fact 재수집 회피 + 체이닝 시그널 명시 (HSPOLICY_DESIGN 의 "Fact 공유 — Output appendix 강제 규약" 절 참조). **직전 스킬의 appendix 가 있으면 본 스킬 입력으로 우선 사용** — 같은 fact 재수집 회피.
 - ALWAYS conduct the brainstorm in the conversation only.
 - NEVER create, write, or save documents — even if the result resembles
   a requirements doc, GDD, or design brief.
@@ -230,7 +237,9 @@ quick/normal은 메인에서 Socratic 직접. subagent 오버헤드 회피.
 - Save, write, or generate document files.
 - Inject any persona or override user rules.
 - Force multi-domain exploration on simple, single-answer questions.
-- Auto-call other skills.
+- Mutating 스킬 자동 호출 금지 (implement / refactor / cleanup / document / plan-* / cl-* 등).
+- Diagnostic 끼리는 사용자 체이닝 시그널 있고 opt-out 없을 때만 자동 호출 허용 (활성). 안전 쌍: analyze→explain, research→brainstorm, troubleshoot→explain.
+- 자동 호출 시 activation header 에 "↳ chained from /hs:이전스킬" 표기 의무.
 - Continue questioning past the point where the user has clearly
   signaled they want synthesis.
 

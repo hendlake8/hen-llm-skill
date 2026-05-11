@@ -33,6 +33,11 @@ Examples:
 - 🔍 [hs:workflow] Combat 시스템 PLAN 작성 (DESIGN 기반)
 - 🔍 [hs:workflow] 결제 API PLAN (SPEC만 있음, design 없이 진행)
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -60,7 +65,7 @@ brainstorm → design → workflow → /hs:document → /hs:plan → implement
 ### What this skill does
 - Decompose a system / feature into **Phases** with explicit `X-Y` IDs
   (matching the user's documented PLAN.md grammar).
-- Decompose each Phase into actionable **tasks** as `- [ ]` checkboxes.
+- Decompose each Phase into actionable **tasks** as `-` bullets (SSOT — 진행 상태는 progress.yaml 이 단독 관리, PLAN.md 에 체크박스 X).
 - Produce a complete `*_PLAN.md`-shaped markdown text in the conversation,
   ready to be saved by `/hs:document` and loaded by `/hs:plan`.
 - Auto-detect predecessor artifacts (DESIGN / SPEC / recent skill context).
@@ -169,7 +174,7 @@ WAIT for user confirmation if scope is ambiguous; otherwise proceed.
 - Aim for Phases that map to clear, demoable milestones.
 
 ### Step 4 — Decompose into tasks
-For each Phase, enumerate concrete actionable tasks as `- [ ]` items.
+For each Phase, enumerate concrete actionable tasks as `-` bullet items.
 
 - Each task is small enough to be done in one focused session
   (rough heuristic: a task is one to a few file edits, or one well-defined
@@ -218,19 +223,19 @@ restructuring.
 ## 구현 순서
 
 ### Phase 1-1: 작업명 (환경)
-- [ ] 태스크 1
-- [ ] 태스크 2
-- [ ] 태스크 3
+- 태스크 1
+- 태스크 2
+- 태스크 3
 
 ### Phase 1-2: 다음 작업명 (환경)
-- [ ] 태스크 1
-- [ ] 태스크 2
+- 태스크 1
+- 태스크 2
 
 ### Phase 2-1: 다른 그룹 작업 (환경)
-- [ ] 태스크 1
+- 태스크 1
 
 ### Phase 2-2: 후속 작업 (환경)
-- [ ] 태스크 1
+- 태스크 1
 
 ## 미해결 / 추후 결정 사항
 - {open decision} — {options + recommendation if any}
@@ -246,12 +251,16 @@ Notes on the structure:
   anchor that `/hs:plan-load` looks for (per the user's global rule).
 - Phase headers must be `### Phase X-Y: 이름` exactly. The "(환경)"
   parenthetical is optional but supports the user's documented format.
-- Task lines must use `- [ ]` (incomplete) — `/hs:plan-load` recognizes
-  these as task entries.
+- Task lines must use `-` simple bullet — `/hs:plan-load` 가 task entry 로
+  인식. 체크박스 형식 (`- [ ]` / `- [x]`) 은 backward compat 으로 여전히
+  인식되지만 신규 PLAN.md 는 단순 bullet 만 사용. PLAN.md 에 진행 마킹
+  안 함 (SSOT: progress.yaml 단독).
 - Omit `## 제약 / 가정`, `## 리스크`, `## 미해결` sections if they
   would be empty — they are optional per the user's PLAN.md format.
 
 ## Output policy
+
+**모든 출력 끝에 표준 `## Skill Output Metadata` appendix 의무** — Collected Facts (3-5 fact) + Next Skill Hints. 다음 스킬이 fact 재수집 회피 + 체이닝 시그널 명시 (HSPOLICY_DESIGN 의 "Fact 공유 — Output appendix 강제 규약" 절 참조). **직전 스킬의 appendix 가 있으면 본 스킬 입력으로 우선 사용** — 같은 fact 재수집 회피.
 - ALWAYS present the PLAN markdown in the conversation only.
 - NEVER create, write, or save PLAN files — even if the result is long.
 - Do NOT propose "save to file?" or auto-generate `*_PLAN.md`.
@@ -294,7 +303,7 @@ upgrade/migration steps that need authoritative ordering.
 **Will:**
 - Author PLAN-compatible markdown strictly following the user's
   documented PLAN.md grammar (`## 구현 순서`, `### Phase X-Y: 이름`,
-  `- [ ]` tasks).
+  `-` bullet tasks).
 - Auto-detect DESIGN / SPEC / recent skill context as inputs.
 - Decompose work into balanced Phases with sane dependency structure.
 - Validate the plan against requirements, dependency cycles, and
@@ -310,7 +319,8 @@ upgrade/migration steps that need authoritative ordering.
 - Modify existing source files.
 - Run / test / build anything.
 - Inject any persona or override user rules.
-- Auto-invoke other skills.
+- Pipeline-Stage 스킬 — 산출물이 다음 단계 입력 사양인 본 스킬은 후속이 mutating 이어도 사용자 체이닝 시그널 시 자동 호출 허용 (활성). 활성 체이닝: workflow → plan-load, workflow → document. 단 호출 직전에 mutating 스킬의 자체 Pre-flight approval (Step 3) 은 그대로 수행 — 자동 호출이 변경 승인을 건너뛰는 것은 아님.
+- 자동 호출 시 activation header 에 "↳ chained from /hs:이전스킬 (pipeline)" 표기 의무.
 
 ## Examples
 

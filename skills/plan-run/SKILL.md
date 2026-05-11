@@ -30,6 +30,11 @@ Examples:
 - 🔍 [hs:plan-run] Combat, Phase 1-1부터 자동 실행
 - 🔍 [hs:plan-run] Inventory, Phase 2-2부터 재개
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -275,6 +280,7 @@ plan: {name}
 - 정상 완료 / 실패 / 인터럽트 모두 종결 메시지로 명확히 보고.
 
 **Will Not:**
+- plan-run 분류 예외 — 자체 사전 일괄 승인 모델로 다른 스킬을 오케스트레이트. Diagnostic / Mutating 표준 자동호출 정책과 별개 (HSPOLICY_DESIGN 의 분류 매핑 표 참조).
 - 사전 일괄 승인 없이 자동 실행 시작하지 않음.
 - 실패 후 자동 rollback / 자동 재시도 하지 않음
   (사용자가 plan-rollback / plan-start로 명시 처리).

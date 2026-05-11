@@ -30,6 +30,11 @@ Examples:
 - 🔍 [hs:plan-pause] current
 - 🔍 [hs:plan-pause] Phase 1-2
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -113,7 +118,8 @@ python {PLUGIN_ROOT}/scripts/plan_state.py pause [<phase_id>]
 **Will Not:**
 - Phase 상태를 reset하지 않음 (rollback과 다름).
 - 다른 Phase 영향 없음.
-- 파일 자동 저장 / 다른 스킬 호출.
+- 파일 자동 저장 안 함.
+- 어떤 스킬도 자동으로 호출하지 않음. 사용자 명시 호출만 진입 가능 (Mutating 스킬 — 상태 변경 작업이므로 명시 진입 필수).
 
 ## Examples
 

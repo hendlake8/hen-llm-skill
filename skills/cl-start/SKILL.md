@@ -29,6 +29,11 @@ header in this exact format:
 Example:
 - 🔍 [hs:cl-start] API 리팩토링 (hendlake)
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -103,7 +108,6 @@ python {PLUGIN_ROOT}/scripts/cm_state.py start "<topic>"
 ### Step 5 — Output policy
 - 폴더 / state 파일 생성은 스크립트가 atomic 처리.
 - 다른 파일 수정 안 함.
-- 다른 스킬 자동 호출 안 함.
 
 ## Tool coordination
 - **Bash** — `cm_state.py start` 호출.
@@ -120,7 +124,7 @@ python {PLUGIN_ROOT}/scripts/cm_state.py start "<topic>"
 - 다른 활성 세션 무시하고 강제 시작 안 함.
 - 기존 비활성 토픽 자동 재활성화 안 함 (사용자 수동 정리 필요).
 - 자동 저장 hook 등록 안 함 (옵션 C — 완전 수동).
-- 다른 스킬 자동 호출.
+- 어떤 스킬도 자동으로 호출하지 않음. 사용자 명시 호출만 진입 가능 (Mutating 스킬 — 상태 변경 작업이므로 명시 진입 필수).
 
 ## Examples
 

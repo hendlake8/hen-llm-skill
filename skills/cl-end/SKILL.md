@@ -29,6 +29,11 @@ header in this exact format:
 Example:
 - 🔍 [hs:cl-end] API 리팩토링, Phase 03 (final)
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -126,7 +131,6 @@ python {PLUGIN_ROOT}/scripts/cm_state.py end [topic]
 ### Step 5 — Output policy
 - 마지막 Phase의 CHAT_LOG.md 작성 + active=false.
 - 폴더 / 기존 파일 삭제 안 함 (보존).
-- 다른 스킬 자동 호출 안 함.
 
 ## Tool coordination
 - **Bash** — `cm_state.py end` 호출.
@@ -142,7 +146,7 @@ python {PLUGIN_ROOT}/scripts/cm_state.py end [topic]
 - 폴더 / 파일 자동 삭제 안 함 (보존이 default).
 - `/compact` 자동 입력 안 함.
 - 종료 후 다른 세션 자동 시작 안 함.
-- 다른 스킬 자동 호출.
+- 어떤 스킬도 자동으로 호출하지 않음. 사용자 명시 호출만 진입 가능 (Mutating 스킬 — 상태 변경 작업이므로 명시 진입 필수).
 
 ## Examples
 

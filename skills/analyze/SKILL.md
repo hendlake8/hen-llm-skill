@@ -34,6 +34,11 @@ Example:
 - 🔍 [hs:analyze] code mode, deep, multi-agent (4 perspectives)
 - 🔍 [hs:analyze] code mode, security focus, deep (security-engineer)
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -161,6 +166,8 @@ Domain-specific by inferred focus:
 ```
 
 ## Output policy
+
+**모든 출력 끝에 표준 `## Skill Output Metadata` appendix 의무** — Collected Facts (3-5 fact) + Next Skill Hints. 다음 스킬이 fact 재수집 회피 + 체이닝 시그널 명시 (HSPOLICY_DESIGN 의 "Fact 공유 — Output appendix 강제 규약" 절 참조). **직전 스킬의 appendix 가 있으면 본 스킬 입력으로 우선 사용** — 같은 fact 재수집 회피.
 - ALWAYS present analysis results in the conversation only.
 - NEVER create, write, or save report files — even if findings are extensive.
 - Do NOT propose "save to file?" or auto-generate reports.
@@ -329,6 +336,9 @@ read-only 진단 — 코드 수정 금지.
 - Apply fixes, refactors, or cleanups.
 - Save, write, or generate report files.
 - Run dynamic analysis (compile / execute / profile).
+- Mutating 스킬 자동 호출 금지 (implement / refactor / cleanup / document / plan-* / cl-* 등).
+- Diagnostic 끼리는 사용자 체이닝 시그널 있고 opt-out 없을 때만 자동 호출 허용 (활성). 안전 쌍: analyze→explain, research→brainstorm, troubleshoot→explain.
+- 자동 호출 시 activation header 에 "↳ chained from /hs:이전스킬" 표기 의무.
 - Inject any persona or override the user's global rules.
 
 ## Examples

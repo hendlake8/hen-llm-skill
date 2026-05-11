@@ -31,6 +31,11 @@ Examples:
 - 🔍 [hs:document] author, gamedesign, DAMAGE_FORMULA.md
 - 🔍 [hs:document] save, plan, COMBAT_PLAN.md
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -66,7 +71,6 @@ analyze / brainstorm / design / workflow / research → "저장" → /hs:documen
 ### What this skill does NOT do
 - 코드 inline 주석 작성 → `/hs:implement`의 책임.
 - 자동 트리거 (사용자 명시 호출 필수).
-- 다른 스킬 자동 호출 (저장 후 plan-load 등은 사용자 안내만).
 
 ## Two modes
 
@@ -258,10 +262,11 @@ powershell -NoProfile -ExecutionPolicy Bypass \
 ```
 
 ## Output policy
+
+**모든 출력 끝에 표준 `## Skill Output Metadata` appendix 의무** — Collected Facts (3-5 fact) + Next Skill Hints. 다음 스킬이 fact 재수집 회피 + 체이닝 시그널 명시 (HSPOLICY_DESIGN 의 "Fact 공유 — Output appendix 강제 규약" 절 참조). **직전 스킬의 appendix 가 있으면 본 스킬 입력으로 우선 사용** — 같은 fact 재수집 회피.
 - 새 파일 생성 / 기존 파일 수정 모두 가능 (스킬의 본질적 책임).
 - 단, **Step 4 승인 후에만**.
 - 보고서 별도 저장 안 함 (대화 내 요약만).
-- 다른 스킬 자동 호출하지 않음 (안내만).
 
 ## Tool coordination
 
@@ -319,7 +324,7 @@ Save mode는 보통 MCP 안 씀. Author mode에서 컨텐츠 수집 시 활용.
   document는 plan-run에서 거의 안 불림).
 - 코드 파일에 inline 주석 작성 안 함 (그건 implement의 책임).
 - 기존 파일 silent overwrite 안 함 (덮어쓸 때 사용자 확인).
-- 다른 스킬 자동 호출 안 함 (plan-load 등은 안내만).
+- 어떤 스킬도 자동으로 호출하지 않음. 사용자 명시 호출만 진입 가능 (Mutating 스킬 — Step 4 Pre-flight approval 게이트 필수). plan-load 등 후속은 안내만.
 - 사용자 룰의 Doc 구조 외 임의 위치에 저장 안 함
   (사용자가 명시 path 지정 시 그것 우선).
 

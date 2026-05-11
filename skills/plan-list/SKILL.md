@@ -31,6 +31,11 @@ Examples:
 - 🔍 [hs:plan-list] 3개 plan
 - 🔍 [hs:plan-list] 등록된 plan 없음
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -125,7 +130,9 @@ find ~/.claude/plugins -path "*hs/scripts/plan_state.py" 2>/dev/null | head -1
 **Will Not:**
 - 어떤 상태도 변경하지 않음.
 - 결과를 파일로 저장하지 않음.
-- 다른 스킬 자동 호출.
+- Mutating 스킬 자동 호출 금지 (implement / refactor / cleanup / document / plan-* / cl-* 등).
+- Diagnostic 끼리는 사용자 체이닝 시그널 있고 opt-out 없을 때만 자동 호출 허용 (활성). 안전 쌍: analyze→explain, research→brainstorm, troubleshoot→explain.
+- 자동 호출 시 activation header 에 "↳ chained from /hs:이전스킬" 표기 의무.
 
 ## Examples
 

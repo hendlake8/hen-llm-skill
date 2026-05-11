@@ -30,6 +30,11 @@ Examples:
 - 🔍 [hs:plan-redesign] Combat
 - 🔍 [hs:plan-redesign] Combat, preview
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -249,7 +254,7 @@ plan 상태: {plan_status_kr}
 - source 변경 없는데 강제 적용하지 않음.
 - 사용자 확인 없이 위험 변경 진행하지 않음.
 - progress.yaml 직접 편집 금지 (스크립트 통해서만).
-- 다른 스킬 자동 호출.
+- 어떤 스킬도 자동으로 호출하지 않음. 사용자 명시 호출만 진입 가능 (Mutating 스킬 — 상태 변경 작업이므로 명시 진입 필수).
 
 ## Examples
 

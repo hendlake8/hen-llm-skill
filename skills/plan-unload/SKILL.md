@@ -30,6 +30,11 @@ Examples:
 - 🔍 [hs:plan-unload] Combat
 - 🔍 [hs:plan-unload] Combat, force
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -107,7 +112,7 @@ python {PLUGIN_ROOT}/scripts/plan_state.py unload <plan_name> [--force]
 **Will Not:**
 - 다른 plan에 영향 없음.
 - progress.yaml 외의 파일 삭제 안 함 (PLAN.md 원본 등은 그대로).
-- 다른 스킬 자동 호출.
+- 어떤 스킬도 자동으로 호출하지 않음. 사용자 명시 호출만 진입 가능 (Mutating 스킬 — 상태 변경 작업이므로 명시 진입 필수).
 - 페르소나 / 룰 무시.
 
 ## Examples

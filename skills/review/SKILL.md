@@ -32,6 +32,11 @@ Examples:
 - 🔍 [hs:review] file, src/Combat/CombatController.cs, normal
 - 🔍 [hs:review] range, src/Combat/CombatController.cs:120-180, quick
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -70,7 +75,6 @@ normal output.
 ### What this skill does NOT do
 - 코드 / 파일 변경 안 함 (read-only).
 - 빌드 / 테스트 / git 명령 자동 실행 안 함.
-- 다른 스킬 자동 호출 안 함.
 - 빌트인 `/review`, `/ultrareview` 등 슬래시 스킬 내부 호출 안 함.
 - 결과를 파일로 자동 저장하지 않음 (저장은 `/hs:document` 위임).
 
@@ -257,9 +261,10 @@ git diff main...HEAD
 ```
 
 ### Step 8 — Output policy
+
+**모든 출력 끝에 표준 `## Skill Output Metadata` appendix 의무** — Collected Facts (3-5 fact) + Next Skill Hints. 다음 스킬이 fact 재수집 회피 + 체이닝 시그널 명시 (HSPOLICY_DESIGN 의 "Fact 공유 — Output appendix 강제 규약" 절 참조). **직전 스킬의 appendix 가 있으면 본 스킬 입력으로 우선 사용** — 같은 fact 재수집 회피.
 - 대화 전용. 파일 자동 저장 안 함.
 - 코드 / 파일 변경 안 함.
-- 다른 스킬 자동 호출 안 함.
 
 ## Tool coordination
 
@@ -325,7 +330,10 @@ git diff main...HEAD
 **Will Not:**
 - 코드 / 파일 변경 안 함.
 - 빌드 / 테스트 / git mutating 명령 자동 실행 안 함.
-- 다른 스킬 자동 호출 안 함 (빌트인 / hs 모두).
+- Mutating 스킬 자동 호출 금지 (implement / refactor / cleanup / document / plan-* / cl-* 등). 빌트인 슬래시 스킬 (`/review`, `/ultrareview` 등) 도 자동 호출하지 않음.
+- Diagnostic 끼리는 사용자 체이닝 시그널 있고 opt-out 없을 때만 자동 호출 허용 (활성). 안전 쌍: analyze→explain, research→brainstorm, troubleshoot→explain. **review 는 안전 쌍에서 제외 — review→다음 스킬 자동 체이닝 금지 (사용자 의식 호출 강제, 게이트키퍼 역할).**
+- 자동 호출 시 activation header 에 "↳ chained from /hs:이전스킬" 표기 의무.
+- **review 는 Diagnostic 이지만 mutating (implement 등) 자동 호출을 명시 차단.** "리뷰 결과 → 사용자 검토 → 명시 호출" 게이트키퍼 역할이 의도된 안전망. Pipeline-Stage 예외 적용 안 됨.
 - 결과 자동 저장 안 함 (저장은 `/hs:document`).
 - subagent 결과를 검증 없이 그대로 출력하지 않음 (충돌 / 중복 처리).
 - 신뢰도 낮은 가설을 단정으로 보고하지 않음.

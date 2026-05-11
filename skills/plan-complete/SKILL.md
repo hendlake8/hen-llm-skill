@@ -31,6 +31,11 @@ header in this exact format:
 Example:
 - 🔍 [hs:plan-complete] Phase 1-2
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -124,7 +129,8 @@ python {PLUGIN_ROOT}/scripts/plan_state.py complete <phase_id>
 - pending 상태 Phase에 대해 호출 거부 (먼저 plan-start 필요).
 - in_progress가 아닌데 강제로 완료 처리하지 않음
   (paused는 허용, 그 외는 거부).
-- 다른 스킬 자동 호출 / 파일 자동 저장.
+- 어떤 스킬도 자동으로 호출하지 않음. 사용자 명시 호출만 진입 가능 (Mutating 스킬 — 상태 변경 작업이므로 명시 진입 필수).
+- 파일 자동 저장 안 함.
 
 ## Examples
 

@@ -33,6 +33,11 @@ Examples:
 - 🔍 [hs:implement] new feature: user profile component (Unity, C#)
 - 🔍 [hs:implement] bug fix: null check in CombatController
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -187,6 +192,8 @@ Present a concise summary:
 Do NOT auto-invoke other skills. Do NOT auto-commit.
 
 ## Output policy
+
+**모든 출력 끝에 표준 `## Skill Output Metadata` appendix 의무** — Collected Facts (3-5 fact) + Next Skill Hints. 다음 스킬이 fact 재수집 회피 + 체이닝 시그널 명시 (HSPOLICY_DESIGN 의 "Fact 공유 — Output appendix 강제 규약" 절 참조). **직전 스킬의 appendix 가 있으면 본 스킬 입력으로 우선 사용** — 같은 fact 재수집 회피.
 - Code changes: applied via Write / Edit / MultiEdit AFTER pre-flight
   approval (Step 3).
 - Reports / summaries: conversation only — no separate report file.
@@ -254,7 +261,7 @@ Do NOT auto-modify Excel files unless the user explicitly authorized.
 - Add features, error handling, or abstractions beyond the request.
 - Refactor surrounding code that is not part of the requested change.
 - Run tests, builds, or `git` commands autonomously.
-- Auto-invoke other skills (`/hs:test`, `/hs:document`, etc.).
+- 어떤 스킬도 자동으로 호출하지 않음. 사용자 명시 호출만 진입 가능 (Mutating 스킬 — Pre-flight approval 게이트 필수).
 - Save reports to files — that's `/hs:document`'s job.
 - Inject any persona or override user rules.
 

@@ -30,6 +30,11 @@ Examples:
 - 🔍 [hs:plan-load] Combat ← Docs/DEVELOPMENT/Dev/Combat/COMBAT_PLAN.md
 - 🔍 [hs:plan-load] StockApp ← /tmp/stock_plan.md
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -128,7 +133,9 @@ PLAN.md에 Phase 섹션 추가 후 재시도.
 #### 2c. Phase별 태스크 추출
 
 각 Phase 헤더 다음, 다음 Phase 헤더 또는 섹션 끝 사이에서:
-- `- [ ] 태스크`, `- [x] 태스크`, `- 태스크` 모두 인식.
+- **권장 형식**: `- 태스크` 단순 bullet (현 표준).
+- **Backward compat**: `- [ ] 태스크`, `- [x] 태스크` 도 인식 (기존 PLAN.md 호환).
+  단 PLAN.md 의 체크 표시는 *초기 status 만* 결정 — 진행 추적은 progress.yaml 단독.
 - `[x]` 또는 `[X]` → 완료된 태스크로 처리.
 - 빈 줄 / 일반 텍스트 / 코드 블록은 무시.
 
@@ -232,7 +239,7 @@ Phase 구조:
 - PLAN.md 형식이 깨졌으면 추측해서 진행하지 않음
   (명확한 에러로 사용자에게 수정 요청).
 - progress.yaml 직접 편집 금지 (스크립트 통해서만).
-- 다른 스킬 자동 호출.
+- 어떤 스킬도 자동으로 호출하지 않음. 사용자 명시 호출만 진입 가능 (Mutating 스킬 — 상태 변경 작업이므로 명시 진입 필수).
 
 ## Examples
 

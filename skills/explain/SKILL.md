@@ -34,6 +34,11 @@ Examples:
 - 🔍 [hs:explain] JWT 인증, basic
 - 🔍 [hs:explain] Unity Addressables 동작, deep
 
+체이닝된 호출 시 (Phase 2 자동호출 활성화 후):
+- Diagnostic 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬" 추가.
+- Pipeline-Stage 체이닝: 본 헤더 다음 줄에 "↳ chained from /hs:이전스킬 (pipeline)" 추가.
+- 명시 호출: 추가 표기 없음.
+
 Leave a blank line after the header, then proceed with the skill's
 normal output.
 
@@ -184,10 +189,11 @@ level에 따라 구조화:
 - 사용자가 simple-first 의도 보였으면 생략.
 
 ## Output policy
+
+**모든 출력 끝에 표준 `## Skill Output Metadata` appendix 의무** — Collected Facts (3-5 fact) + Next Skill Hints. 다음 스킬이 fact 재수집 회피 + 체이닝 시그널 명시 (HSPOLICY_DESIGN 의 "Fact 공유 — Output appendix 강제 규약" 절 참조). **직전 스킬의 appendix 가 있으면 본 스킬 입력으로 우선 사용** — 같은 fact 재수집 회피.
 - 대화 전용. 파일 자동 저장 안 함.
 - 사용자가 명시적으로 "저장해줘" 하면 → `/hs:document` 안내 (자동
   호출 X).
-- 다른 스킬 자동 호출 안 함.
 
 ## Tool coordination
 
@@ -241,7 +247,9 @@ deep level + 다요소 시스템 (예: "전체 인증 흐름", "다 모듈 데�
 - 코드 / 파일 변경 안 함 (출력 전용).
 - 보고서 파일 자동 저장 안 함 (저장은 `/hs:document` 위임).
 - 페르소나 주입 / 사용자 룰 무시.
-- 다른 스킬 자동 호출.
+- Mutating 스킬 자동 호출 금지 (implement / refactor / cleanup / document / plan-* / cl-* 등).
+- Diagnostic 끼리는 사용자 체이닝 시그널 있고 opt-out 없을 때만 자동 호출 허용 (활성). 안전 쌍: analyze→explain, research→brainstorm, troubleshoot→explain.
+- 자동 호출 시 activation header 에 "↳ chained from /hs:이전스킬" 표기 의무.
 - 단순 질문에 옵션 / 비교표 / 다단계 구조 강제 (simple-first).
 - 사실 확인 없이 짐작으로 답 (도구 사용 가능한데 안 쓰는 일 없음).
 
