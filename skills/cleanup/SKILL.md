@@ -162,10 +162,66 @@ For every candidate, run safety checks:
     string-shaped occurrences.
   - **Low / uncertain** — anything more ambiguous.
 
-### Step 3 — Pre-flight approval
-**MANDATORY before any deletion.**
+### Step 3 — Pre-flight approval (조건부 게이트)
 
-Group candidates by category and confidence. Present them to the user:
+기본 원칙: `/hs:cleanup X` slash 호출 자체가 글로벌 룰의 "명시 요구"
+를 충족한다. 요청이 명확하면 추가 승인 없이 진행하지만, **cleanup
+의 본질적 안전 원칙상 Medium / Low confidence 항목은 게이트 우회와
+무관하게 항상 사용자 확인을 거친다** (False positive 시 silent 손
+실 방지).
+
+평가 순서: 3a → 3b → 3c. 통과 결정 시 Step 4 로 직행.
+
+#### 3a. Check auto-run mode (skip-condition)
+
+`/hs:plan-run` 활성 시 일괄 승인된 것으로 간주:
+
+```bash
+python {PLUGIN_ROOT}/scripts/plan_state.py auto-run-status
+```
+
+- `active: true && stale: false` → **SKIP 3b/3c**. Step 4 로 직행하되
+  **High confidence 항목만** 제거. Medium/Low 는 보고에 명시만 하고
+  보류.
+- 그 외 → 3b 로 진행.
+
+Step 5 (행동 보존 검증) 는 항상 실행.
+
+#### 3b. Opt-in 우회 키워드 검사
+
+사용자 호출 **끝**에 다음 자연어 키워드 중 하나가 포함되어 있으면
+**High confidence 항목만 자동 제거 모드** 로 게이트 스킵:
+
+- `바로`
+- `진행`
+
+Medium / Low confidence 항목은 본 우회와 무관하게 항상 보고에 명시
+하되 제거하지 않음. 플래그 형식은 사용하지 않는다.
+
+#### 3c. 모호 판정 (게이트 조건)
+
+다음 5축을 평가:
+
+1. **카테고리** — dead code / unused imports / unused locals /
+   commented-out / empty constructs 중 어느 것인가?
+2. **범위** — file / directory / project-wide 중 어디인가?
+3. **보존 정책** — public 심볼 포함 여부 / 프레임워크 마커 처리 방침
+   이 명시되었는가?
+4. **Confidence 임계** — High-only / High+Medium 중 어디까지 자동
+   제거할지 결정되었는가?
+5. **결과 처리 방식** — 일괄 제거 / 카테고리별 / 항목별 선택 중
+   결정되었는가?
+
+평가 규칙: 사용자 호출 + 코드 컨텍스트 + 본 SKILL.md 의 Risk-aware
+default 로 채워진 항목 → 결정. 그 외 → 미결정.
+
+**판정**: 미결정 ≥ 2 → 3d 로 진행. 그렇지 않으면 Step 4 로 직행하며
+디폴트는 **High-only 자동 제거**.
+
+#### 3d. 모호한 경우 — 후보 분류 제시 + 사용자 결정 대기
+
+3c 에서 미결정 축이 2개 이상이면 후보를 confidence 별로 묶어 옵션
+제시:
 
 ```
 ## 정리 후보
@@ -185,6 +241,9 @@ Group candidates by category and confidence. Present them to the user:
 ## 영향 추정
 - 총 {N}건 식별, 제거 후 라인 수 약 {n}줄 감소
 
+## 모호 판정
+- 미결정 축: {2개 이상의 축}
+
 ## 어떻게 진행할까요?
 1. High만 제거
 2. High + Medium 제거 (Medium은 항목별 재확인)
@@ -196,9 +255,10 @@ Group candidates by category and confidence. Present them to the user:
 WAIT for user decision. Default if user says "go" without specifying:
 **High confidence only**.
 
-The slash invocation `/hs:cleanup X` is permission to PROPOSE,
-not permission to DELETE. Approval at this step is what unlocks
-deletions.
+The slash invocation `/hs:cleanup X` is permission to PROPOSE.
+명확한 요청에서는 그 자체가 High-only 제거 권한을 함께 부여하지만,
+모호한 요청에서는 본 단계의 추가 결정이 어떤 confidence 까지 제거할
+지를 푼다.
 
 ### Step 4 — Apply
 Apply approved deletions only.

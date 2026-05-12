@@ -152,16 +152,75 @@ question before proceeding. Do not ask if a reasonable default fits.
 - 위임된 경우: agent의 Findings를 받아 호출자 매핑 / 위험 분류를
   Step 3 plan의 `영향 범위` 와 `행동 보존 검증 계획`에 인용 흡수.
 
-### Step 3 — Pre-flight approval
-**MANDATORY before any file write.**
+### Step 3 — Pre-flight approval (조건부 게이트)
 
-Present a before/after-style plan:
+기본 원칙: `/hs:refactor X` slash 호출 자체가 글로벌 룰의 "명시 요구"
+를 충족한다. 명확한 요청은 추가 승인 없이 즉시 진행하고, **요청이
+모호할 때만** 사용자 승인을 받는다. Step 5 의 Behavior preservation
+검증은 게이트 우회와 무관하게 항상 수행한다.
+
+평가 순서: 3a → 3b → 3c. 어느 단계에서 통과 결정이 나면 즉시 Step 4
+로 직행.
+
+#### 3a. Check auto-run mode (skip-condition)
+
+`/hs:plan-run` 활성 시 일괄 승인된 것으로 간주:
+
+```bash
+python {PLUGIN_ROOT}/scripts/plan_state.py auto-run-status
+```
+
+- `active: true && stale: false` → **SKIP 3b/3c**. Step 4 로 직행.
+- 그 외 → 3b 로 진행.
+
+Step 5 (행동 보존 검증) 은 본 플래그와 무관하게 항상 실행 — failure
+gates are not bypassed.
+
+#### 3b. Opt-in 우회 키워드 검사
+
+사용자 호출 **끝**에 다음 자연어 키워드 중 하나가 포함되어 있으면 게이트
+전체 스킵 → Step 4 로 직행:
+
+- `바로`
+- `진행`
+
+플래그 형식(`--go`, `-y` 등)은 본 스킬 시스템의 "flags 대신 자연어
+추론" 원칙에 따라 사용하지 않는다.
+
+#### 3c. 모호 판정 (게이트 조건)
+
+다음 5축을 평가:
+
+1. **카테고리** — rename/extract/inline/move/simplify/reorganize/replace
+   중 어느 것인지 결정되었는가?
+2. **변경 대상** — 어떤 심볼/파일/영역이 대상인지 식별되었는가?
+3. **변경 내용** — 새 명명/구조/알고리즘 등 구체 변경이 결정되었는가?
+4. **영향 범위** — Public surface 보존 / 호출자 / 외부 모듈 영향이
+   사전 조사로 드러나 있는가?
+5. **보존 경계** — 어느 API 가 절대 변경 금지인지 명시되었는가?
+
+평가 규칙:
+- 사용자 호출 + 기존 코드 컨텍스트 + predecessor 문서로 채워진 항목 →
+  결정된 것으로 간주.
+- 그 외 → 미결정.
+
+**판정**: 미결정 ≥ 2 → 3d (승인 대기) 로 진행. 그렇지 않으면 Step 4
+로 직행 — 별도 승인 메시지 출력 없이 변경 적용 후 Step 6 보고에
+변경 계획을 한 줄로 흡수.
+
+#### 3d. 모호한 경우 — 변경 계획 제시 + 승인 대기
+
+3c 에서 미결정 축이 2개 이상이면 짧은 before/after-style plan 을 사용
+자에게 제시:
 
 ```
 ## 리팩토링 계획
 - 카테고리: {rename / extract / move / simplify / ...}
 - 대상: {file_path}:{symbol or line range}
 - 의도: {one-line intent}
+
+## 모호 판정
+- 미결정 축: {2개 이상의 축 + 각각 무엇이 비어 있는지}
 
 ## 변경 미리보기
 Before:
@@ -184,9 +243,9 @@ After:
 
 WAIT for user approval before writing.
 
-The slash invocation `/hs:refactor X` is permission to PROPOSE,
-not permission to WRITE. Approval at this step is what unlocks
-file changes.
+The slash invocation `/hs:refactor X` is permission to PROPOSE.
+명확한 요청에서는 그 자체가 WRITE 권한을 함께 부여하지만, 모호한
+요청에서는 본 단계의 추가 승인이 WRITE 권한을 푼다.
 
 ### Step 4 — Apply
 Apply changes per the approved plan.

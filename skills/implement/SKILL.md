@@ -109,8 +109,14 @@ question before proceeding. Do not ask if a reasonable default fits.
 - Identify integration points (callers, references) using
   `find_referencing_symbols` if available.
 
-### Step 3 — Pre-flight approval
-**MANDATORY before any file write — UNLESS auto-run mode is active.**
+### Step 3 — Pre-flight approval (조건부 게이트)
+
+기본 원칙: `/hs:implement X` slash 호출 자체가 글로벌 룰의 "명시 요구"
+를 충족한다. 따라서 명확한 요청은 추가 승인 없이 즉시 진행하고, **요청
+이 모호할 때만** 한 번 더 사용자 승인을 받는다.
+
+평가 순서: 3a → 3b → 3c. 어느 단계에서 통과 결정이 나면 즉시 Step 4로
+직행.
 
 #### 3a. Check auto-run mode (skip-condition)
 
@@ -122,25 +128,69 @@ Detect this by querying:
 python {PLUGIN_ROOT}/scripts/plan_state.py auto-run-status
 ```
 
-- Response `active: true && stale: false` → **SKIP Step 3b**.
+- Response `active: true && stale: false` → **SKIP 3b/3c**.
   Proceed directly to Step 4. Do NOT show the approval prompt.
 - Response `active: true && stale: true` → treat as inactive
-  (24h timeout). Proceed with Step 3b normally.
+  (24h timeout). Proceed with 3b normally.
 - Response `active: false` or error (no plan registered) → proceed
-  with Step 3b normally.
+  with 3b normally.
 
 Step 5 verification ALWAYS runs regardless of this flag — failure
 gates are not bypassed.
 
-#### 3b. Show plan + wait for approval
+#### 3b. Opt-in 우회 키워드 검사
 
-Present a short plan to the user:
+사용자 호출 **끝**에 다음 자연어 키워드 중 하나가 포함되어 있으면 게이트
+전체를 스킵하고 Step 4로 직행:
+
+- `바로`
+- `진행`
+
+(플래그 형식 — `--go`, `-y` 등 — 은 본 스킬 시스템의 "flags 대신 자연어
+추론" 원칙에 따라 사용하지 않는다.)
+
+키워드 위치는 호출 끝으로 제한해 본문에 일반 명사로 등장하는 경우와
+구분한다. 예: `/hs:implement X 추가 진행` → 우회 발동.
+`/hs:implement 진행 상황 화면 추가` → 우회 발동 아님 (본문 명사).
+
+#### 3c. 모호 판정 (게이트 조건)
+
+다음 5축을 평가:
+
+1. **변경 대상** — 파일/심볼이 사용자 입력 또는 코드 컨텍스트로 식별
+   가능한가?
+2. **신규 명명** — 새 클래스/함수/필드 이름이 지정되었거나 명백히 도출
+   가능한가?
+3. **데이터 구조** — 스키마/enum/시그니처가 결정되었는가?
+4. **라이브러리/패턴 선택** — 사용할 라이브러리/패턴이 명시 또는 명백히
+   추론 가능한가?
+5. **통합 지점** — 어디서 호출/배치할지 결정되었는가?
+
+각 축 평가 규칙:
+- SPEC/DESIGN/PLAN 문서로 채워진 항목 → 결정된 것으로 간주
+- 사용자 호출 + 기존 코드 컨텍스트로 채워진 항목 → 결정된 것으로 간주
+- 그 외 → 미결정
+
+**판정**: 미결정 축이 **2개 이상**이면 모호 → 3d (승인 대기) 로 진행.
+그렇지 않으면 Step 4로 직행.
+
+명확한 경우 (5축 중 미결정 ≤ 1) 의 흐름:
+- 별도 승인 메시지 출력 없음.
+- Step 2에서 도출한 변경 계획은 Step 6 보고에 한 줄로 흡수.
+- 변경 적용 → 검증 → 보고가 1턴 안에 완결.
+
+#### 3d. 모호한 경우 — 변경 계획 제시 + 승인 대기
+
+3c에서 미결정 축이 2개 이상이면 짧은 계획을 사용자에게 제시:
 
 ```
 ## 변경 계획
 - 신규: {file_path} — {purpose}
 - 수정: {file_path}:{section} — {change}
 - 삭제: {file_path} — {reason}
+
+## 모호 판정
+- 미결정 축: {2개 이상의 축 + 각각 무엇이 비어 있는지}
 
 ## 영향 범위
 - 호출자 N곳 영향: {brief list}
@@ -151,12 +201,11 @@ Present a short plan to the user:
 진행할까요?
 ```
 
-WAIT for user approval before writing. Per the user's global rule
-(파일 생성/수정/삭제는 명시 요구 후), do NOT skip this step.
+WAIT for user approval before writing.
 
-The slash invocation `/hs:implement X` is permission to PROPOSE,
-not permission to WRITE. Approval at this step is what unlocks
-file changes.
+The slash invocation `/hs:implement X` is permission to PROPOSE.
+명확한 요청에서는 그 자체가 WRITE 권한을 함께 부여하지만, 모호한
+요청에서는 본 단계의 추가 승인이 WRITE 권한을 푼다.
 
 ### Step 4 — Generate / Modify
 Apply changes per the approved plan. Coding conventions, comment

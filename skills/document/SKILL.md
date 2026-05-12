@@ -182,22 +182,60 @@ analyze / brainstorm / design / workflow / research → "저장" → /hs:documen
 - 직전 대화에서 컨텐츠 추출.
 - 사용자가 별도 텍스트 제공했으면 그것 우선.
 
-### Step 4 — Pre-flight approval
+### Step 4 — Pre-flight approval (조건부 게이트)
 
-**MANDATORY before any file write.**
+기본 원칙: `/hs:document X` slash 호출 자체가 글로벌 룰의 "명시 요구"
+를 충족한다. 명확한 저장 요청은 즉시 진행하고, **요청이 모호할 때만**
+사용자 승인을 받는다. 단 **기존 파일 덮어쓰기 충돌은 게이트 우회와
+무관하게 항상 사용자 확인** (silent overwrite 금지 — 데이터 손실
+방지).
 
-검사 항목:
-1. **Auto-run mode 확인** (다른 hs 스킬과 일관):
-   ```bash
-   python {PLUGIN_ROOT}/scripts/plan_state.py auto-run-status
-   ```
-   `active: true && stale: false` → Step 4의 사용자 승인 skip
-   (plan-run 일괄 승인된 상태로 간주). 단, 위치/파일명만은 명확히
-   보고하고 진행.
-   - **다만 document는 plan-run에서 거의 호출되지 않음**
-     (plan-run은 코드만 다룸). 안전 가드로만 작동.
+평가 순서: 4a → 4b → 4c. 통과 결정 시 Step 5/6 로 직행.
 
-2. 정상 흐름 (auto-run 비활성):
+#### 4a. Check auto-run mode (skip-condition)
+
+```bash
+python {PLUGIN_ROOT}/scripts/plan_state.py auto-run-status
+```
+
+- `active: true && stale: false` → **SKIP 4b/4c**. 위치/파일명만
+  보고하고 Step 5/6 로 직행.
+  - **다만 document는 plan-run에서 거의 호출되지 않음**
+    (plan-run은 코드만 다룸). 안전 가드로만 작동.
+- 그 외 → 4b 로 진행.
+
+#### 4b. Opt-in 우회 키워드 검사
+
+사용자 호출 **끝**에 다음 자연어 키워드 중 하나가 포함되어 있으면 게이트
+스킵 → Step 5/6 로 직행:
+
+- `바로`
+- `진행`
+
+단 기존 파일 덮어쓰기 충돌 (동일 경로/파일명 이미 존재) 은 본 우회와
+무관하게 항상 사용자 확인. 플래그 형식은 사용하지 않는다.
+
+#### 4c. 모호 판정 (게이트 조건)
+
+다음 5축을 평가:
+
+1. **모드** — save / author 중 어느 것인가?
+2. **타입** — 6종(analysis / spec / design / plan / gamedesign /
+   general) 중 어느 것인가?
+3. **시스템명 / 주제명** — 컨텐츠에서 명시 또는 명백히 추론 가능한가?
+4. **파일명** — 사용자 룰의 컨벤션 (영어 대문자 + `_`, `*_SPEC.md`
+   등) 에 따라 결정되었는가?
+5. **저장 위치** — 사용자 룰의 Doc 구조 + 타입 매핑으로 결정되었는가?
+
+평가 규칙: 사용자 호출 + 직전 대화 컨텍스트 + predecessor 문서 +
+SKILL.md 의 Type detection 표로 채워진 항목 → 결정. 그 외 → 미결정.
+
+**판정**: 미결정 ≥ 2 → 4d 로 진행. 그렇지 않으면 Step 5/6 로 직행
+하며 저장 계획은 Step 7 보고에 흡수.
+
+#### 4d. 모호한 경우 — 저장 계획 제시 + 승인 대기
+
+4c 에서 미결정 축이 2개 이상이면 저장 계획을 사용자에게 제시:
 
 ```
 ## 저장 계획
@@ -210,10 +248,18 @@ analyze / brainstorm / design / workflow / research → "저장" → /hs:documen
 - 기존 파일: {existing? overwrite? new name?}
 - Obsidian vault junction: {필요한 경우 자동 등록 예정}
 
+## 모호 판정
+- 미결정 축: {2개 이상의 축 + 각각 무엇이 비어 있는지}
+
 진행할까요?
 ```
 
 WAIT for user approval. 사용자가 위치/이름 변경 요청하면 반영 후 재확인.
+
+The slash invocation `/hs:document X` is permission to PROPOSE.
+명확한 요청에서는 그 자체가 WRITE 권한을 함께 부여하지만, 모호한
+요청 또는 기존 파일 충돌 시에는 본 단계의 추가 승인이 WRITE 권한을
+푼다.
 
 ### Step 5 — Vault auto-registration (필요 시)
 
