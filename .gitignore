@@ -29,6 +29,9 @@ Thumbs.db
 # Playwright MCP — snapshot / console log 산출물
 .playwright-mcp/
 
+# 개인 리서치/분석 노트 — 배포 repo 제외 (플러그인 산출물 아님)
+Docs/DEVELOPMENT/Analyze/
+
 # Tmp / logs
 *.tmp
 *.log
