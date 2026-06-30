@@ -35,3 +35,5 @@ Docs/DEVELOPMENT/Analyze/
 # Tmp / logs
 *.tmp
 *.log
+
+claude-config/rules/comfyui-guide.md
