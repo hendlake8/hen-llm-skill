@@ -267,7 +267,7 @@ The slash invocation `/hs:document X` is permission to PROPOSE.
 룰에 따라 Obsidian vault junction 자동 등록:
 
 ```bash
-powershell -NoProfile -ExecutionPolicy Bypass \
+pwsh -NoProfile -ExecutionPolicy Bypass \
   -File ~/.claude/register_vault.ps1 \
   -VaultPath "D:\ObsidianVault" \
   -ProjectRoot "{프로젝트 루트}"

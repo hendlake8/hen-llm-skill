@@ -145,12 +145,12 @@ Docs/DEVELOPMENT/Dev/{시스템명}/
 **LLM 이 호출해야 하는 경우** (Docs/ 트리거):
 ```bash
 # VaultPath 생략 시 OBSIDIAN_VAULT 자동 사용
-powershell -NoProfile -ExecutionPolicy Bypass -File ~/.claude/register_vault.ps1 -ProjectRoot "{프로젝트루트}"
+pwsh -NoProfile -ExecutionPolicy Bypass -File ~/.claude/register_vault.ps1 -ProjectRoot "{프로젝트루트}"
 ```
 
 다른 폴더를 수동으로 등록하려면 `-Subfolder` / `-NameSuffix` 사용:
 ```bash
-powershell -NoProfile -ExecutionPolicy Bypass -File ~/.claude/register_vault.ps1 `
+pwsh -NoProfile -ExecutionPolicy Bypass -File ~/.claude/register_vault.ps1 `
   -ProjectRoot "{프로젝트루트}" -Subfolder "cl-reports" -NameSuffix "-cl"
 ```
 
