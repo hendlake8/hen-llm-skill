@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 """
-install_claude_config.py — 프로젝트의 claude-config/ 를 ~/.claude/ 로 복사.
-sync_claude_config.py의 역방향. 새 PC 설치 시 사용.
+install_claude_config.py — 프로젝트의 claude-config/ 를 ~/.claude/ 에 설치.
+새 PC 설치 시 사용. 저장소(claude-config/)가 진실의 원천(SSOT)이다.
 
-복사 매핑:
-    claude-config/CLAUDE.md           → ~/.claude/CLAUDE.md
-    claude-config/rules/*.md          → ~/.claude/rules/*.md
+설치 매핑:
+    claude-config/CLAUDE.md           → ~/.claude/CLAUDE.md          (복사)
+    claude-config/rules/              ← ~/.claude/rules              (junction/symlink)
     claude-config/scripts/register_vault.ps1
-                                      → ~/.claude/register_vault.ps1
+                                      → ~/.claude/register_vault.ps1 (복사)
+
+rules 는 복사가 아니라 junction(Windows) / symlink(Unix) 으로 연결한다.
+저장소의 rules 수정이 즉시 라이브에 반영되고, 역방향 동기화가 필요 없다.
+단일 파일(CLAUDE.md 등)은 junction 불가(폴더 전용)라 복사를 유지한다 —
+수정은 항상 claude-config/ 쪽에서 하고 본 스크립트로 재배포한다.
 
 안전 가드:
-    기본: 기존 파일과 충돌 시 에러로 중단 (사용자 데이터 보호)
-    --force: 기존 파일 덮어쓰기 (백업 없음)
-    --backup: 덮어쓰기 전 ~/.claude/.../<file>.bak 으로 백업
-    --dry-run: 실제 복사 안 함, 계획만
+    기본: 기존 파일/폴더와 충돌 시 에러로 중단 (사용자 데이터 보호)
+    --force: 기존 파일 덮어쓰기, 기존 rules 폴더 삭제 후 연결 (백업 없음)
+    --backup: 덮어쓰기/연결 전 ~/.claude/.../<이름>.bak 으로 백업
+    --dry-run: 실제 변경 안 함, 계획만
 
 설치 후 안내:
     OBSIDIAN_VAULT 환경 변수 미설정 시 설정 방법 안내
@@ -34,10 +39,11 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
 
-# 복사 매핑: (src relative to claude-config/, dest relative to ~/.claude/)
+# 설치 매핑: (src relative to claude-config/, dest relative to ~/.claude/)
+# type: file = 복사, junction = 폴더 연결 (Windows junction / Unix symlink)
 COPY_MAP = [
     {"src": "CLAUDE.md", "dest": "CLAUDE.md", "type": "file"},
-    {"src": "rules", "dest": "rules", "type": "dir"},
+    {"src": "rules", "dest": "rules", "type": "junction"},
     {"src": "scripts/register_vault.ps1", "dest": "register_vault.ps1", "type": "file"},
 ]
 
@@ -79,19 +85,61 @@ def install_file(src: Path, dest: Path, dry_run: bool, force: bool, backup: bool
             "size_bytes": dest.stat().st_size}
 
 
-def install_dir(src: Path, dest: Path, dry_run: bool, force: bool, backup: bool) -> dict:
+def create_link(src: Path, dest: Path) -> None:
+    """dest 를 src 폴더로 연결한다 (Windows junction / Unix symlink)."""
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if os.name == "nt":
+        import _winapi
+        _winapi.CreateJunction(str(src), str(dest))
+    else:
+        os.symlink(str(src), str(dest), target_is_directory=True)
+
+
+def is_link_dir(path: Path) -> bool:
+    """path 가 junction/symlink 인지 판별 (실폴더면 False)."""
+    return os.path.normcase(os.path.realpath(path)) != os.path.normcase(os.path.abspath(path))
+
+
+def install_junction(src: Path, dest: Path, dry_run: bool, force: bool, backup: bool) -> dict:
     if not src.exists() or not src.is_dir():
         return {"src": str(src), "dest": str(dest), "status": "skipped",
                 "reason": "source missing or not a directory"}
 
-    files_info = []
-    for item in sorted(src.iterdir()):
-        if item.is_file() and not item.name.startswith("."):
-            target = dest / item.name
-            files_info.append(install_file(item, target, dry_run, force, backup))
+    src_real = os.path.normcase(os.path.realpath(src))
 
-    return {"src": str(src), "dest": str(dest), "status": "dir_processed",
-            "files": files_info, "file_count": len(files_info)}
+    if os.path.lexists(dest):  # 깨진 링크도 감지 (exists 는 링크를 따라가므로 부적합)
+        # 이미 원하는 대상을 가리키는 링크면 할 일 없음
+        if is_link_dir(dest) and os.path.normcase(os.path.realpath(dest)) == src_real:
+            return {"src": str(src), "dest": str(dest), "status": "ok",
+                    "reason": "junction already points to source"}
+
+        if not (force or backup):
+            return {"src": str(src), "dest": str(dest), "status": "conflict",
+                    "reason": "existing dir/link (use --force or --backup)"}
+
+        if dry_run:
+            return {"src": str(src), "dest": str(dest),
+                    "status": "would_replace_with_junction",
+                    "would_backup": backup}
+
+        if backup:
+            backup_path = dest.with_name(dest.name + ".bak")
+            if backup_path.exists():
+                return {"src": str(src), "dest": str(dest), "status": "conflict",
+                        "reason": f"backup path already exists: {backup_path}"}
+            dest.rename(backup_path)
+        else:
+            if is_link_dir(dest):
+                os.rmdir(dest)  # 링크만 제거 (원본 폴더 내용은 보존)
+            else:
+                shutil.rmtree(dest)
+
+    if dry_run:
+        return {"src": str(src), "dest": str(dest), "status": "would_create_junction"}
+
+    create_link(src, dest)
+    return {"src": str(src), "dest": str(dest), "status": "junction_created",
+            "target": str(src)}
 
 
 def install(target_root: Path, dry_run: bool, force: bool, backup: bool) -> dict:
@@ -99,7 +147,7 @@ def install(target_root: Path, dry_run: bool, force: bool, backup: bool) -> dict
     if not config_root.exists():
         return {"ok": False, "code": "no_claude_config",
                 "message": f"claude-config/ 폴더 없음: {config_root}",
-                "details": {"hint": "먼저 sync_claude_config.py로 동기화하거나 git clone 확인"}}
+                "details": {"hint": "저장소 git clone 여부와 --target 경로를 확인"}}
 
     home_claude = Path.home() / ".claude"
 
@@ -113,10 +161,10 @@ def install(target_root: Path, dry_run: bool, force: bool, backup: bool) -> dict
             results.append(r)
             if r.get("status") == "conflict":
                 has_conflict = True
-        elif entry["type"] == "dir":
-            r = install_dir(src_path, dest_path, dry_run, force, backup)
+        elif entry["type"] == "junction":
+            r = install_junction(src_path, dest_path, dry_run, force, backup)
             results.append(r)
-            if any(f.get("status") == "conflict" for f in r.get("files", [])):
+            if r.get("status") == "conflict":
                 has_conflict = True
 
     # OBSIDIAN_VAULT 환경 변수 점검
@@ -153,7 +201,7 @@ def install(target_root: Path, dry_run: bool, force: bool, backup: bool) -> dict
 def main():
     parser = argparse.ArgumentParser(
         prog="install_claude_config",
-        description="Install project claude-config/ to ~/.claude/ (reverse of sync)",
+        description="Install project claude-config/ to ~/.claude/ (files copied, rules linked)",
     )
     parser.add_argument("--dry-run", action="store_true",
                         help="실제 복사하지 않고 계획만 표시")

@@ -8,6 +8,7 @@
 | PyYAML | `pip install pyyaml` |
 | Claude Code | 최신 안정 버전 |
 | git | 사용자 식별 (`git config user.name`)에 사용 |
+| PowerShell 7+ (`pwsh`) | Windows — `register_vault.ps1` 호출용. 미설치 시 vault 자동 등록 실패. `winget install Microsoft.PowerShell` |
 
 선택 사항:
 - **Serena MCP** — 코드 분석 정확도 향상
@@ -83,6 +84,8 @@ echo $OBSIDIAN_VAULT
 
 #### 직접 실행 (수동 / 디버그용)
 
+rules 는 복사가 아니라 저장소 `claude-config/rules` 로의 junction(Windows) / symlink(Unix) 연결이다.
+
 ```bash
 # 기본: 충돌 시 .bak 백업 후 덮어쓰기 (안전)
 python scripts/install_claude_config.py --backup
@@ -142,13 +145,19 @@ python scripts/plan_state.py list
 
 ### 본인이 룰 수정 시
 
+`~/.claude/rules` 는 `claude-config/rules` 로의 junction — 저장소 쪽을 수정하면 즉시 반영된다.
+
 ```bash
-# ~/.claude/CLAUDE.md 또는 rules/*.md 수정 후
+# claude-config/rules/*.md 수정 후 (배포 단계 없음)
 cd ~/dev/hen-llm-skill
-python scripts/sync_claude_config.py
 git add claude-config/
 git commit -m "rules: <changes>"
 git push
+```
+
+CLAUDE.md / register_vault.ps1 은 복사 배포 대상 — `claude-config/` 쪽 수정 후:
+```bash
+python scripts/install_claude_config.py --backup
 ```
 
 ### 다른 PC에서 최신 받기
@@ -211,7 +220,7 @@ git config --global user.name "Your Name"
 
 # 2. 글로벌 룰 정리 (선택, 백업 권장)
 mv ~/.claude/CLAUDE.md ~/.claude/CLAUDE.md.removed
-mv ~/.claude/rules ~/.claude/rules.removed
+cmd //c rmdir "%USERPROFILE%\.claude\rules"   # junction 링크 제거 (저장소 원본은 유지)
 mv ~/.claude/register_vault.ps1 ~/.claude/register_vault.ps1.removed
 
 # 3. 프로젝트별 .hs/ 데이터 삭제 (각 프로젝트에서)

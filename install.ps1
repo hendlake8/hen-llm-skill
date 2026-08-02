@@ -202,5 +202,5 @@ Write-Host "================================================================="
 Write-Host ""
 Write-Host "위치 정보:" -ForegroundColor Gray
 Write-Host "  - 플러그인: $hsPluginPath"
-Write-Host "  - 글로벌 룰: ~/.claude/CLAUDE.md, ~/.claude/rules/"
+Write-Host "  - 글로벌 룰: ~/.claude/CLAUDE.md, ~/.claude/rules/ (junction -> $repoRoot\claude-config\rules)"
 Write-Host ""

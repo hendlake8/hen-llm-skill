@@ -78,6 +78,7 @@ LLM에게 git URL만 전달하여 자동 설치 — [INSTALL_FOR_LLM.md](INSTALL
 
 ### 5. 의존성
 - **Python 3.7+** (`pip install pyyaml`)
+- **PowerShell 7+ (`pwsh`)** — Windows, `register_vault.ps1` 호출용 (미설치 시 Obsidian vault 자동 등록만 실패)
 - **Claude Code** (Opus 4.7 1M 또는 Sonnet 4.6 권장)
 - (선택) **Serena MCP** — 코드 분석 / 구현 정확도 ↑
 - (선택) **Context7 MCP** — 라이브러리 / 프레임워크 문서
@@ -128,17 +129,16 @@ plan-redesign / plan-impact                  # 변경 관리
 ```
 hen-llm-skill/
 ├── .claude-plugin/plugin.json    # 플러그인 manifest (name: "hs")
-├── claude-config/                # 사용자 글로벌 설정 스냅샷
+├── claude-config/                # 사용자 글로벌 설정 원본 (SSOT)
 │   ├── CLAUDE.md
-│   ├── rules/                    # 8개 룰 파일
+│   ├── rules/                    # 룰 파일 (~/.claude/rules 가 이 폴더로의 junction)
 │   └── scripts/register_vault.ps1
 ├── scripts/
 │   ├── _user.py                  # 공통 user detection
 │   ├── plan_state.py             # plan 상태 + JSONL 파싱
 │   ├── cm_state.py               # CM 상태 + JSONL → CHAT_LOG
 │   ├── context_usage.py          # 컨텍스트 / 토큰 측정
-│   ├── sync_claude_config.py     # ~/.claude/ → claude-config/
-│   └── install_claude_config.py  # claude-config/ → ~/.claude/
+│   └── install_claude_config.py  # claude-config/ → ~/.claude/ (파일 복사, rules 는 junction)
 └── skills/                       # 26개 SKILL.md
     ├── analyze/SKILL.md
     ├── brainstorm/SKILL.md
@@ -179,19 +179,31 @@ cl-stats 가 생성하는 사람용 마크다운 리포트. 채팅 본문 없이
 
 ## 글로벌 설정 유지보수
 
+저장소(`claude-config/`)가 진실의 원천(SSOT)이다. `~/.claude/rules` 는 이 저장소로의
+junction 이라 rules 수정은 즉시 라이브에 반영된다.
+
 ### 룰 변경 시 (개발 PC)
 ```bash
-# ~/.claude/CLAUDE.md 또는 rules/*.md 수정 후
-python scripts/sync_claude_config.py
+# claude-config/rules/*.md 수정 (junction 이라 별도 배포 불필요)
 git add claude-config/
 git commit -m "rules: ..."
 git push
 ```
 
+CLAUDE.md / register_vault.ps1 은 단일 파일이라 복사 배포 대상:
+```bash
+# claude-config/ 쪽 수정 후
+python scripts/install_claude_config.py --backup
+```
+
+### 스킬 수정 시
+`skills/*/SKILL.md` 는 플러그인 junction 이라 저장소 수정이 곧 라이브 반영 —
+새 세션 또는 `/reload-plugins` 부터 적용된다. 커밋/푸시는 rules 와 동일.
+
 ### 다른 PC에서 가져오기
 ```bash
 git pull
-python scripts/install_claude_config.py --backup  # 안전
+python scripts/install_claude_config.py --backup  # 파일 갱신 + rules junction 생성
 ```
 
 ## 핵심 워크플로 예시

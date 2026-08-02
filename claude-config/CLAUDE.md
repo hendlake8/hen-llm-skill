@@ -29,6 +29,20 @@ find . -name "*.txt" 2>/dev/null
 
 **중요**: Windows 환경의 Git Bash에서 `2>nul` 또는 `2>NUL`을 사용하면 실제 파일이 생성됩니다. 반드시 `/dev/null`을 사용하세요.
 
+## 중요: 글로벌 설정 수정 규약
+
+글로벌 룰 / CLAUDE.md / hs 스킬의 원본(SSOT)은 `D:\GitPrjs\hen-llm-skill` 저장소다.
+어느 프로젝트에서든 이들 수정 요청을 받으면 아래 절차를 따르고, 완료 후 저장소 커밋이 필요함을 사용자에게 알린다.
+
+| 자산 | 편집 대상 (SSOT) | 반영 방식 |
+|---|---|---|
+| 룰 (`rules/*.md`) | `{저장소}\claude-config\rules\` | `~/.claude\rules` 가 junction — 수정 즉시 반영 |
+| `CLAUDE.md`, `register_vault.ps1` | `{저장소}\claude-config\` | 복사 배포 — 수정 후 `python scripts/install_claude_config.py --backup` 으로 재배포 |
+| hs 스킬 (`skills/*/SKILL.md`) | `{저장소}\skills\` | 플러그인 junction — 새 세션 / `/reload-plugins` 부터 반영 |
+
+- `~/.claude\CLAUDE.md` 직접 편집 금지 — 저장소와 어긋나 다음 재배포 때 덮여 사라진다.
+- `~/.claude\rules\` 는 junction 이라 편집하면 실제로는 저장소 파일이 바뀐다 — 혼동 방지를 위해 저장소 쪽 경로로 작업하고, 미커밋 변경이 남지 않도록 커밋을 안내한다.
+
 ## 중요: 문서화 규칙
 분석 작업이나 문제 해결 시 결과를 문서로 남길 때는 다음 규칙을 따릅니다:
 
@@ -147,6 +161,9 @@ Docs/DEVELOPMENT/Dev/{시스템명}/
 # VaultPath 생략 시 OBSIDIAN_VAULT 자동 사용
 pwsh -NoProfile -ExecutionPolicy Bypass -File ~/.claude/register_vault.ps1 -ProjectRoot "{프로젝트루트}"
 ```
+
+**전제**: PowerShell 7+ (`pwsh`) 필요. 미설치 환경이면 등록을 건너뛰고 사용자에게
+`winget install Microsoft.PowerShell` 설치를 안내한다 (다른 기능에는 영향 없음).
 
 다른 폴더를 수동으로 등록하려면 `-Subfolder` / `-NameSuffix` 사용:
 ```bash

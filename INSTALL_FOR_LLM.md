@@ -33,6 +33,13 @@ python --version || python3 --version
 ```
 install 스크립트가 Python 3.7+ 에 의존. 없으면 사용자에게 알리고 정지 (설치 못 함).
 
+### 4. pwsh 사전 확인 (Windows, warn 수준)
+```bash
+pwsh -v
+```
+`register_vault.ps1` 호출(Obsidian vault junction 자동 등록)이 PowerShell 7+ (`pwsh`) 에 의존.
+미설치여도 설치는 진행하되, 사용자에게 안내: `winget install Microsoft.PowerShell`
+
 ## Install procedure (정확히 이 순서)
 
 ### Step 1: Clone
@@ -78,6 +85,7 @@ chmod +x install.sh
 ```
 
 기본 동작 = 기존 ~/.claude/ 파일 충돌 시 자동 .bak 백업 후 덮어쓰기 (안전 default).
+rules 는 복사가 아니라 junction(Windows) / symlink(Unix) 연결 — 기존 실폴더는 `rules.bak` 으로 이동 후 연결.
 사용자가 백업 없이 강제 덮어쓰기 명시하면 `-Force` / `--force` 추가.
 
 ### Step 4: 결과 확인
@@ -109,7 +117,7 @@ Claude Code 세션에서 아래를 차례로 복붙하세요.
 
 설치 위치:
 - 플러그인: ~/.claude/plugins/marketplaces/local/plugins/hs (junction → {TARGET})
-- 글로벌 룰: ~/.claude/CLAUDE.md, ~/.claude/rules/
+- 글로벌 룰: ~/.claude/CLAUDE.md, ~/.claude/rules/ (junction → {TARGET}/claude-config/rules)
 
 문제 발생 시:
 - {TARGET}/INSTALL.md 트러블슈팅 섹션 참고
@@ -140,7 +148,9 @@ LLM은 스크립트 stdout을 그대로 사용자에게 전달하면 됨.
 - 그래도 실패 시 수동 안내:
   ```cmd
   mklink /J "%USERPROFILE%\.claude\plugins\marketplaces\local\plugins\hs" "{TARGET}"
+  mklink /J "%USERPROFILE%\.claude\rules" "{TARGET}\claude-config\rules"
   ```
+  (rules 쪽은 기존 실폴더가 있으면 먼저 백업/제거 필요)
 
 ### E. OBSIDIAN_VAULT 미설정 (warn)
 - 설치는 성공하지만 경고
@@ -154,6 +164,11 @@ LLM은 스크립트 stdout을 그대로 사용자에게 전달하면 됨.
 - 1차 시도: Claude Code 새 세션에서 `/plugin` 명령으로 marketplace 'local' 활성화 안내
 - 2차 시도: 사용자에게 직접 marketplace 등록 명령 실행 요청
 - INSTALL.md 트러블슈팅 참고
+
+### G. pwsh 미설치 (Windows)
+- 증상: `pwsh` 명령 인식 안 됨 → `register_vault.ps1` 호출 실패 (vault junction 자동 등록 불가)
+- 스킬 본체 동작에는 영향 없음 — warn 후 진행
+- 해결: `winget install Microsoft.PowerShell` 안내
 
 ## Do NOT do
 
@@ -186,4 +201,5 @@ git pull
 ./install.sh --backup    # 또는 install.ps1 -Backup
 ```
 
-설치와 동일 절차. 새 룰 / 스크립트가 ~/.claude/ 에 적용됨.
+rules 는 junction 이라 `git pull` 만으로 즉시 반영된다.
+install 재실행은 복사 배포 파일(CLAUDE.md, register_vault.ps1) 갱신용 (멱등 — rules 는 "이미 연결됨"으로 skip).
